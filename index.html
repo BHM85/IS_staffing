@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Capacity Dashboard</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;
+  --border:#E4E8F0;--border-strong:#CBD5E1;
+  --text:#1E293B;--text-muted:#64748B;--text-subtle:#94A3B8;
+  --accent:#4F46E5;--accent-light:#EEF2FF;--accent-hover:#4338CA;
+  --success:#10B981;--success-light:#ECFDF5;
+  --warning:#F59E0B;--warning-light:#FFFBEB;
+  --danger:#EF4444;--danger-light:#FEF2F2;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:10}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.sidebar-logo h1{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.sidebar-logo p{font-size:11px;color:var(--text-muted);margin-top:2px}
+.sidebar-nav{flex:1;padding:12px 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13.5px;font-weight:500;color:var(--text-muted);transition:all .15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--accent-light);color:var(--accent)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--text-subtle)}
+
+/* ── MAIN ── */
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.topbar-title{font-size:16px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--text-subtle)}
+.content{padding:24px 28px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border-strong)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+
+/* ── MONTH TABS ── */
+.month-tabs{display:flex;gap:4px;background:var(--surface);padding:3px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:18px;width:fit-content}
+.month-tab{padding:5px 14px;border-radius:4px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text-muted);transition:all .15s;user-select:none}
+.month-tab:hover{color:var(--text)}
+.month-tab.active{background:var(--accent);color:#fff}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-sm)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--surface2);color:var(--text-muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}
+thead th.wk{background:#F1F4FF;color:var(--accent);text-align:center;min-width:52px;font-size:11px;padding:8px 4px}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#FAFBFE}
+td{padding:8px 12px;vertical-align:middle}
+td.wk{text-align:center;padding:4px;min-width:52px}
+
+/* ── ALLOCATION CELL ── */
+.ac{display:inline-flex;align-items:center;justify-content:center;width:42px;height:26px;border-radius:4px;font-size:11.5px;font-weight:600;cursor:pointer;transition:all .1s;border:1px solid transparent}
+.ac.empty{color:var(--text-subtle);background:transparent}
+.ac.empty:hover{background:var(--bg);border-color:var(--border)}
+.ac.low{background:#EEF2FF;color:var(--accent);border-color:#C7D2FE}
+.ac.low:hover{background:#C7D2FE}
+.ac.high{background:var(--warning-light);color:#D97706;border-color:#FDE68A}
+.ac.high:hover{background:#FDE68A}
+.ac.full{background:#FEF2F2;color:var(--danger);border-color:#FECACA}
+.ac.full:hover{background:#FECACA}
+.ac-input{width:42px;height:26px;border:1.5px solid var(--accent);border-radius:4px;font-size:11.5px;font-weight:600;text-align:center;outline:none;background:white;font-family:inherit;color:var(--accent)}
+
+/* ── CAPACITY CELL ── */
+.cc{display:inline-flex;align-items:center;justify-content:center;width:48px;height:26px;border-radius:4px;font-size:12px;font-weight:700}
+.cc-ok{background:var(--success-light);color:#059669}
+.cc-mid{background:var(--warning-light);color:#D97706}
+.cc-over{background:var(--danger-light);color:var(--danger)}
+.cc-zero{background:var(--bg);color:var(--text-subtle);font-weight:400}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-confirmed{background:var(--success-light);color:#059669}
+.b-probable{background:#FFF7ED;color:#C2410C}
+.b-paused{background:var(--bg);color:var(--text-muted)}
+.b-finished{background:#F1F5F9;color:var(--text-subtle)}
+.nature-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500}
+.n-product{background:#E0F2FE;color:#0369A1}
+.n-transformation{background:#F3E8FF;color:#7C3AED}
+.n-mixed{background:#ECFDF5;color:#059669}
+.n-enterprise{background:#FFF7ED;color:#C2410C}
+
+/* ── INLINE SELECT ── */
+.isel{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;color:inherit;padding:0;outline:none;max-width:100px}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:500px;max-width:90vw;max-height:92vh;overflow-y:auto}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px 24px}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+
+/* ── FORM ── */
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text);outline:none;transition:border-color .15s;background:var(--surface)}
+.fi:focus{border-color:var(--accent)}
+.fi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── STATS ── */
+.stats-row{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;flex:1;min-width:140px;box-shadow:var(--shadow-sm)}
+.stat-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:6px}
+.stat-value{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.5px;line-height:1}
+.stat-sub{font-size:11.5px;color:var(--text-muted);margin-top:4px}
+
+/* ── SECTION HEADER ── */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sec-head h2{font-size:14.5px;font-weight:600;color:var(--text)}
+
+/* ── PROJECT ROW ── */
+.proj-group-header td{background:var(--surface2);font-weight:700;font-size:12px;color:var(--text);letter-spacing:.2px;padding:7px 12px}
+
+/* ── ALERT ── */
+.alert-warn{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#991B1B;display:flex;align-items:center;gap:8px}
+
+/* ── LEGEND ── */
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ld{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-muted)}
+.ld-dot{width:10px;height:10px;border-radius:2px}
+
+/* ── MASTER GRID ── */
+.master-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.master-add{display:flex;gap:8px;padding:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:flex-end}
+.count-badge{background:var(--accent-light);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:700}
+
+/* ── PROGRESS BAR ── */
+.pb-wrap{flex:1;background:#F1F5F9;border-radius:4px;height:7px;overflow:hidden}
+.pb{height:100%;border-radius:4px;transition:width .4s}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-subtle)}
+
+/* ── TOOLTIP ── */
+[title]{cursor:default}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+// ─── CONFIG ────────────────────────────────────────────────────────────────────
+const MONTHS_CFG = [
+  { name:'MARCH',  abbr:'MAR', weeks:['W1','W2','W3','W4'] },
+  { name:'APRIL',  abbr:'APR', weeks:['W1','W2','W3','W4','W5'] },
+  { name:'MAY',    abbr:'MAY', weeks:['W1','W2','W3','W4'] },
+  { name:'JUNE',   abbr:'JUN', weeks:['W1','W2','W3','W4'] },
+  { name:'JULY',   abbr:'JUL', weeks:['W1','W2','W3','W4','W5'] },
+];
+const ALL_WEEKS = MONTHS_CFG.flatMap(m => m.weeks.map(w => `${m.abbr}_${w}`));
+const STATUSES = ['Confirmed','Probable','Paused','Finished'];
+const NATURES  = ['Product','Transformation','Mixed','Enterprise'];
+const STATUS_COLOR = { Confirmed:'#059669', Probable:'#C2410C', Paused:'#64748B', Finished:'#94A3B8' };
+
+// ─── INITIAL DATA ──────────────────────────────────────────────────────────────
+const INIT_TEAM = [
+  'Shervin Shashavari','Laura Barranco','Diego Núñez','Adriana Panadés',
+  "Sergio D'Uva",'Borja Herraiz','Laura Otero','Diego Ramírez','Toni Bordoy',
+  'Ezequiel Sandaza','Álvaro González','Álex Dobarco','Juan Cubillo',
+  'Elena Argüelles','Paula León','Alberto Asensio','Francesc Cabana','Adrián Escofet'
+];
+
+const INIT_ASSIGN = [
+  {id:1,  project:'Kuwait STC',               nature:'',               status:'Probable',  member:"Sergio D'Uva",    comment:'Capacity free in March',             allocations:{}},
+  {id:2,  project:'Tradisa',                  nature:'Transformation', status:'Probable',  member:"Sergio D'Uva",    comment:'Paternity leave 1st May',            allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+  {id:3,  project:'Tradisa',                  nature:'Transformation', status:'Probable',  member:'Juan Cubillo',    comment:'',                                   allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+  {id:4,  project:'Tradisa',                  nature:'Transformation', status:'Probable',  member:'Elena Argüelles', comment:'',                                   allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+  {id:5,  project:'Hendrix Cloud',            nature:'Product',        status:'Finished',  member:'',                comment:'',                                   allocations:{}},
+  {id:6,  project:'Hendrix Pricing',          nature:'Product',        status:'Confirmed', member:'Ezequiel Sandaza',comment:'',                                   allocations:{MAR_W1:.7,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:.7,APR_W3:.7,APR_W4:.7,APR_W5:.7}},
+  {id:7,  project:'Fagor Laundry Academy',    nature:'Transformation', status:'Confirmed', member:'Laura Otero',     comment:'',                                   allocations:{MAR_W4:.5,APR_W1:.5}},
+  {id:8,  project:'ONCE',                     nature:'',               status:'Probable',  member:'Alberto Asensio', comment:'',                                   allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+  {id:9,  project:'Aigües de Barcelona',      nature:'Mixed',          status:'Confirmed', member:'Toni Bordoy',     comment:'',                                   allocations:{APR_W1:.25,APR_W2:.25}},
+  {id:10, project:'Aigües de Barcelona',      nature:'Mixed',          status:'Confirmed', member:'Laura Barranco',  comment:'',                                   allocations:{}},
+  {id:11, project:'Siemens PM',               nature:'Transformation', status:'Confirmed', member:'Álvaro González', comment:'',                                   allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5}},
+  {id:12, project:'OBS',                      nature:'Transformation', status:'Confirmed', member:'Elena Argüelles', comment:'',                                   allocations:{MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8,JUN_W1:.8,JUN_W2:.8,JUN_W3:.8,JUN_W4:.8,JUL_W1:.8,JUL_W2:.8,JUL_W3:.8,JUL_W4:.8,JUL_W5:.8}},
+  {id:13, project:'OBS',                      nature:'Transformation', status:'Confirmed', member:'Adrián Escofet',  comment:'TBC',                                allocations:{APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8}},
+  {id:14, project:'OBS',                      nature:'Transformation', status:'Confirmed', member:'Francesc Cabana', comment:'New joiner',                         allocations:{MAY_W1:.8}},
+  {id:15, project:'OBS',                      nature:'Transformation', status:'Confirmed', member:'Alberto Asensio', comment:'',                                   allocations:{APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5}},
+  {id:16, project:'Nestlé ARM',               nature:'Product',        status:'Paused',    member:'',                comment:'Elliot initiative has been cancelled',allocations:{}},
+  {id:17, project:'Nestlé Business arch.',    nature:'Mixed',          status:'Probable',  member:'',                comment:'',                                   allocations:{}},
+  {id:18, project:'Nestlé Global Innovation', nature:'Product',        status:'Confirmed', member:'Borja Herraiz',   comment:'',                                   allocations:{APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+  {id:19, project:'Nestlé Service manager',   nature:'Transformation', status:'Probable',  member:'Adriana Panadés', comment:'',                                   allocations:{APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+  {id:20, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:'Adriana Panadés', comment:'',                                   allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+  {id:21, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:'Paula León',      comment:'',                                   allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+  {id:22, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:"Sergio D'Uva",    comment:'',                                   allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8,JUN_W1:.8,JUN_W2:.8,JUN_W3:.8,JUN_W4:.8,JUL_W1:.8,JUL_W2:.8,JUL_W3:.8,JUL_W4:.8,JUL_W5:.8}},
+  {id:23, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:'Álvaro González', comment:'',                                   allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+  {id:24, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:'Laura Otero',     comment:'',                                   allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:1,MAR_W4:.5}},
+  {id:25, project:'Nestlé US',                nature:'Transformation', status:'Confirmed', member:'Juan Cubillo',    comment:'',                                   allocations:{MAR_W1:.2,MAR_W2:.2,MAR_W3:.2,MAR_W4:.2,APR_W1:.2,APR_W2:.2,APR_W3:.2,APR_W4:.2,APR_W5:.2,MAY_W1:.2,MAY_W2:.2,MAY_W3:.2,MAY_W4:.2}},
+  {id:26, project:'Asitur',                   nature:'Transformation', status:'Confirmed', member:'Juan Cubillo',    comment:'',                                   allocations:{MAR_W1:.8,MAR_W2:.8,MAR_W3:.8,MAR_W4:.8,APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8}},
+  {id:27, project:'Aliseda',                  nature:'Product',        status:'Confirmed', member:'Toni Bordoy',     comment:'',                                   allocations:{MAR_W1:.5,MAR_W2:.5}},
+  {id:28, project:'Aliseda',                  nature:'Product',        status:'Confirmed', member:'Laura Barranco',  comment:'',                                   allocations:{MAR_W1:.15}},
+  {id:29, project:'Anglo american',           nature:'Product',        status:'Confirmed', member:'Diego Ramírez',   comment:'',                                   allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+  {id:30, project:'Instituto de empresa',     nature:'Product',        status:'Confirmed', member:'Diego Núñez',     comment:'',                                   allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1}},
+  {id:31, project:'IDOM',                     nature:'Transformation', status:'Confirmed', member:'Toni Bordoy',     comment:'',                                   allocations:{MAR_W3:.75,MAR_W4:.75,APR_W1:.75}},
+  {id:32, project:'IDOM',                     nature:'Transformation', status:'Confirmed', member:'Alberto Asensio', comment:'',                                   allocations:{MAR_W3:.25,MAR_W4:.25}},
+  {id:33, project:'Illies',                   nature:'Product',        status:'Confirmed', member:'Alberto Asensio', comment:'',                                   allocations:{MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+  {id:34, project:'Illies',                   nature:'Product',        status:'Confirmed', member:'Francesc Cabana', comment:'',                                   allocations:{MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+  {id:35, project:'Laboral Kutxa',            nature:'Product',        status:'Confirmed', member:'Toni Bordoy',     comment:'',                                   allocations:{MAR_W2:.25,MAR_W3:.25,MAR_W4:.25}},
+  {id:36, project:'Acciona',                  nature:'Transformation', status:'Confirmed', member:'Laura Otero',     comment:'',                                   allocations:{APR_W1:.5,APR_W2:.5}},
+];
+
+let _uid = 100;
+const uid = () => ++_uid;
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt = v => v == null ? null : v === 0 ? '0%' : Math.round(v * 100) + '%';
+
+const StatusBadge = ({ status }) => {
+  const cls = { Confirmed:'b-confirmed', Probable:'b-probable', Paused:'b-paused', Finished:'b-finished' }[status] || 'b-paused';
+  const dot = { Confirmed:'●', Probable:'◑', Paused:'⏸', Finished:'✕' };
+  return <span className={`badge ${cls}`}>{dot[status] || '·'} {status}</span>;
+};
+
+const NatureBadge = ({ nature }) => {
+  if (!nature) return null;
+  const cls = { Product:'n-product', Transformation:'n-transformation', Mixed:'n-mixed', Enterprise:'n-enterprise' }[nature] || '';
+  return <span className={`nature-badge ${cls}`}>{nature}</span>;
+};
+
+// ─── ALLOC CELL ──────────────────────────────────────────────────────────────
+function AllocCell({ value, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const ref = useRef(null);
+  const v = value != null ? value : null;
+
+  const start = () => {
+    setDraft(v != null ? String(Math.round(v * 100)) : '');
+    setEditing(true);
+    setTimeout(() => ref.current?.select(), 0);
+  };
+
+  const commit = () => {
+    const n = parseFloat(draft);
+    onSave(draft === '' || isNaN(n) ? null : Math.min(2, Math.max(0, n / 100)));
+    setEditing(false);
+  };
+
+  if (editing) return (
+    <input ref={ref} className="ac-input" value={draft}
+      onChange={e => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={e => { if(e.key==='Enter') commit(); if(e.key==='Escape') setEditing(false); }}
+      placeholder="%" />
+  );
+
+  const cls = v == null ? 'empty' : v >= 1.005 ? 'full' : v >= 0.8 ? 'high' : 'low';
+  return <div className={`ac ${cls}`} onClick={start} title="Click para editar">{v == null ? '+' : fmt(v)}</div>;
+}
+
+// ─── COMPUTE CAPACITY ─────────────────────────────────────────────────────────
+function computeCap(assignments, teamMembers) {
+  const cap = {};
+  teamMembers.forEach(m => { cap[m] = {}; ALL_WEEKS.forEach(w => cap[m][w] = 0); });
+  assignments.forEach(a => {
+    if (!a.member || !cap[a.member]) return;
+    Object.entries(a.allocations).forEach(([w, v]) => {
+      if (cap[a.member][w] !== undefined) cap[a.member][w] = +(cap[a.member][w] + v).toFixed(4);
+    });
+  });
+  return cap;
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function Dashboard({ assignments, teamMembers, month, setMonth }) {
+  const mc = MONTHS_CFG.find(m => m.name === month);
+  const weeks = mc.weeks.map(w => `${mc.abbr}_${w}`);
+  const cap = computeCap(assignments, teamMembers);
+
+  const allProjects = [...new Set(assignments.map(a => a.project))];
+  const confirmed = allProjects.filter(p => assignments.find(a => a.project===p && a.status==='Confirmed')).length;
+  const overloaded = teamMembers.filter(m => weeks.some(w => (cap[m][w]||0) > 1.005)).length;
+  let totalCap = 0, cnt = 0;
+  teamMembers.forEach(m => weeks.forEach(w => { totalCap += cap[m][w]||0; cnt++; }));
+  const avgCap = cnt > 0 ? totalCap / cnt : 0;
+
+  const statusCounts = STATUSES.map(s => ({
+    s, n: [...new Set(assignments.filter(a => a.status===s).map(a => a.project))].length
+  }));
+
+  const activeMembers = teamMembers.filter(m => weeks.some(w => (cap[m][w]||0) > 0));
+
+  return (
+    <div>
+      <div className="sec-head">
+        <h2>Vista general del equipo</h2>
+        <MonthTabs month={month} setMonth={setMonth} />
+      </div>
+
+      <div className="stats-row">
+        <div className="stat-card">
+          <div className="stat-label">Equipo</div>
+          <div className="stat-value">{teamMembers.length}</div>
+          <div className="stat-sub">miembros activos</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Proyectos confirmados</div>
+          <div className="stat-value">{confirmed}</div>
+          <div className="stat-sub">de {allProjects.length} totales</div>
+        </div>
+        <div className="stat-card" style={overloaded > 0 ? {borderColor:'#FECACA',background:'#FFF8F8'} : {}}>
+          <div className="stat-label" style={overloaded > 0 ? {color:'#B91C1C'} : {}}>⚠ Sobrecarga</div>
+          <div className="stat-value" style={{color: overloaded > 0 ? '#EF4444' : '#10B981'}}>{overloaded}</div>
+          <div className="stat-sub">en {month.substring(0,3)}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Cap. media ({month.substring(0,3)})</div>
+          <div className="stat-value" style={{color: avgCap > 1 ? '#EF4444' : avgCap >= .8 ? '#D97706' : '#10B981'}}>
+            {Math.round(avgCap * 100)}%
+          </div>
+          <div className="stat-sub">promedio del equipo</div>
+        </div>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        <div className="table-wrap" style={{padding:20}}>
+          <div style={{fontSize:11px,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--text-muted)',marginBottom:14}}>Estado de proyectos</div>
+          {statusCounts.map(({s, n}) => (
+            <div key={s} style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+              <StatusBadge status={s} />
+              <div className="pb-wrap"><div className="pb" style={{width: allProjects.length ? `${(n/allProjects.length)*100}%` : '0%', background:{Confirmed:'#10B981',Probable:'#F59E0B',Paused:'#CBD5E1',Finished:'#E2E8F0'}[s]}} /></div>
+              <span style={{fontSize:14,fontWeight:700,minWidth:22,textAlign:'right'}}>{n}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="table-wrap" style={{padding:20}}>
+          <div style={{fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'.5px',color:'var(--text-muted)',marginBottom:14}}>
+            Carga máxima por miembro — {month.substring(0,3)}
+          </div>
+          {activeMembers.slice(0, 10).map(m => {
+            const maxV = Math.max(...weeks.map(w => cap[m][w]||0));
+            const over = maxV > 1.005;
+            const mid = maxV >= .8;
+            const barColor = over ? '#EF4444' : mid ? '#F59E0B' : '#10B981';
+            return (
+              <div key={m} style={{display:'flex',alignItems:'center',gap:8,marginBottom:7}}>
+                <div style={{width:130,fontSize:12,fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{m}</div>
+                <div className="pb-wrap"><div className="pb" style={{width:`${Math.min(maxV,1.5)*100/1.5}%`,background:barColor}} /></div>
+                <span style={{fontSize:12,fontWeight:700,minWidth:36,textAlign:'right',color:barColor}}>{Math.round(maxV*100)}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MONTH TABS ───────────────────────────────────────────────────────────────
+function MonthTabs({ month, setMonth }) {
+  return (
+    <div className="month-tabs">
+      {MONTHS_CFG.map(m => (
+        <div key={m.name} className={`month-tab ${month===m.name?'active':''}`} onClick={() => setMonth(m.name)}>
+          {m.name.substring(0,3)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── BY PROJECT VIEW ──────────────────────────────────────────────────────────
+function ByProject({ assignments, setAssignments, teamMembers, projects, month, setMonth }) {
+  const [modal, setModal] = useState(false);
+  const mc = MONTHS_CFG.find(m => m.name === month);
+  const wkeys = mc.weeks.map(w => `${mc.abbr}_${w}`);
+
+  // Group by project maintaining insertion order
+  const grouped = [];
+  const seen = new Map();
+  assignments.forEach(a => {
+    if (!seen.has(a.project)) { seen.set(a.project, []); }
+    seen.get(a.project).push(a);
+  });
+  seen.forEach((rows, proj) => grouped.push({ proj, rows }));
+
+  const updAlloc = (id, wk, val) => setAssignments(prev => prev.map(a => {
+    if (a.id !== id) return a;
+    const na = { ...a.allocations };
+    if (val === null) delete na[wk]; else na[wk] = val;
+    return { ...a, allocations: na };
+  }));
+
+  const updField = (id, f, v) => setAssignments(prev => prev.map(a => a.id===id ? {...a,[f]:v} : a));
+  const delRow = id => setAssignments(prev => prev.filter(a => a.id !== id));
+
+  const bgs = ['#FFFFFF','#FAFBFF'];
+  let pi = -1; const pseen = {};
+
+  return (
+    <div>
+      <div className="sec-head">
+        <h2>Asignaciones por proyecto</h2>
+        <button className="btn btn-primary btn-sm" onClick={() => setModal(true)}>+ Nueva asignación</button>
+      </div>
+      <MonthTabs month={month} setMonth={setMonth} />
+
+      <div className="table-wrap">
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style={{minWidth:150}}>Proyecto</th>
+                <th style={{minWidth:90}}>Naturaleza</th>
+                <th style={{minWidth:105}}>Estado</th>
+                <th style={{minWidth:140}}>Miembro</th>
+                <th style={{minWidth:110}}>Comentario</th>
+                {mc.weeks.map(w => <th key={w} className="wk">{w}</th>)}
+                <th style={{width:36}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {grouped.map(({ proj, rows }) => {
+                if (!pseen[proj]) { pseen[proj]=1; pi++; }
+                const bg = bgs[pi % 2];
+                return rows.map((row, ri) => (
+                  <tr key={row.id} style={{background:bg}}>
+                    {ri === 0 && (
+                      <td rowSpan={rows.length} style={{fontWeight:600,fontSize:13,borderRight:'2px solid var(--border)',background:bg,verticalAlign:'top',paddingTop:10}}>
+                        {row.project}
+                      </td>
+                    )}
+                    <td><NatureBadge nature={row.nature} /></td>
+                    <td>
+                      <select className="isel" value={row.status}
+                        onChange={e => updField(row.id,'status',e.target.value)}
+                        style={{color:STATUS_COLOR[row.status]||'#64748B'}}>
+                        {STATUSES.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td style={{fontSize:13}}>
+                      {row.member
+                        ? <span style={{color:'#334155'}}>{row.member}</span>
+                        : <span style={{color:'#94A3B8',fontStyle:'italic',fontSize:12}}>Sin asignar</span>}
+                    </td>
+                    <td style={{fontSize:12,color:'#94A3B8'}}>{row.comment || '—'}</td>
+                    {wkeys.map(wk => (
+                      <td key={wk} className="wk">
+                        <AllocCell value={row.allocations[wk]??null} onSave={v => updAlloc(row.id, wk, v)} />
+                      </td>
+                    ))}
+                    <td>
+                      <button className="btn btn-ghost btn-sm" onClick={() => delRow(row.id)}
+                        style={{color:'#EF4444',padding:'3px 6px',fontSize:12}} title="Eliminar">✕</button>
+                    </td>
+                  </tr>
+                ));
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {modal && (
+        <AddModal
+          teamMembers={teamMembers}
+          projects={projects}
+          onClose={() => setModal(false)}
+          onAdd={row => { setAssignments(prev => [...prev, {...row, id:uid(), allocations:{}}]); setModal(false); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── BY MEMBER VIEW ───────────────────────────────────────────────────────────
+function ByMember({ assignments, teamMembers, month, setMonth }) {
+  const mc = MONTHS_CFG.find(m => m.name === month);
+  const wkeys = mc.weeks.map(w => `${mc.abbr}_${w}`);
+  const cap = computeCap(assignments, teamMembers);
+
+  const overloaded = teamMembers.filter(m => wkeys.some(w => (cap[m][w]||0) > 1.005)).length;
+
+  const ccls = v => {
+    if (!v || v < 0.005) return 'cc-zero';
+    if (v > 1.005) return 'cc-over';
+    if (v >= 0.8) return 'cc-mid';
+    return 'cc-ok';
+  };
+
+  return (
+    <div>
+      <div className="sec-head">
+        <h2>Capacidad por miembro del equipo</h2>
+        <div className="legend">
+          <span className="ld"><span className="ld-dot" style={{background:'#DCFCE7',border:'1px solid #86EFAC'}}></span>≤ 80%</span>
+          <span className="ld"><span className="ld-dot" style={{background:'#FFFBEB',border:'1px solid #FDE68A'}}></span>80–100%</span>
+          <span className="ld"><span className="ld-dot" style={{background:'#FEF2F2',border:'1px solid #FECACA'}}></span>{'> 100%'}</span>
+        </div>
+      </div>
+
+      {overloaded > 0 && (
+        <div className="alert-warn">
+          ⚠️ <strong>{overloaded} miembro{overloaded>1?'s':''}</strong> con capacidad superada (&gt;100%) en alguna semana de {month}
+        </div>
+      )}
+
+      <MonthTabs month={month} setMonth={setMonth} />
+
+      <div className="table-wrap">
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style={{minWidth:160}}>Miembro del equipo</th>
+                {mc.weeks.map(w => <th key={w} className="wk">{w}</th>)}
+                <th className="wk" style={{fontWeight:700,color:'#334155'}}>AVG</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamMembers.map(member => {
+                const vals = wkeys.map(w => cap[member][w]||0);
+                const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
+                const hasActivity = vals.some(v => v > 0);
+                return (
+                  <tr key={member} style={!hasActivity ? {opacity:.5} : {}}>
+                    <td style={{fontWeight:500}}>{member}</td>
+                    {vals.map((v, i) => (
+                      <td key={i} className="wk">
+                        <div className={`cc ${ccls(v)}`} title={`${member} – ${mc.weeks[i]}: ${Math.round(v*100)}%`}>
+                          {v >= 0.005 ? Math.round(v*100)+'%' : '—'}
+                        </div>
+                      </td>
+                    ))}
+                    <td className="wk">
+                      <div className={`cc ${ccls(avg)}`} style={{fontWeight:700}}>
+                        {avg >= 0.005 ? Math.round(avg*100)+'%' : '—'}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MASTER CONFIG ────────────────────────────────────────────────────────────
+function Master({ teamMembers, setTeamMembers, projects, setProjects, assignments, setAssignments }) {
+  const [nm, setNm] = useState('');
+  const [np, setNp] = useState('');
+  const [nn, setNn] = useState('Product');
+  const [ns, setNs] = useState('Confirmed');
+
+  const addMember = () => {
+    const v = nm.trim();
+    if (v && !teamMembers.includes(v)) { setTeamMembers(p => [...p, v]); setNm(''); }
+  };
+
+  const delMember = m => {
+    if (window.confirm(`¿Eliminar a "${m}" del equipo? Se borrarán sus asignaciones.`)) {
+      setTeamMembers(p => p.filter(x => x !== m));
+      setAssignments(p => p.filter(a => a.member !== m));
+    }
+  };
+
+  const addProject = () => {
+    const v = np.trim();
+    if (v && !projects.find(p => p.name === v)) {
+      setProjects(p => [...p, { name:v, nature:nn, status:ns }]);
+      setNp('');
+    }
+  };
+
+  const delProject = name => {
+    if (window.confirm(`¿Eliminar "${name}"? Se borrarán todas sus asignaciones.`)) {
+      setProjects(p => p.filter(x => x.name !== name));
+      setAssignments(p => p.filter(a => a.project !== name));
+    }
+  };
+
+  const updProjectStatus = (name, status) => {
+    setProjects(p => p.map(x => x.name===name ? {...x, status} : x));
+    setAssignments(p => p.map(a => a.project===name ? {...a, status} : a));
+  };
+
+  const updProjectNature = (name, nature) => {
+    setProjects(p => p.map(x => x.name===name ? {...x, nature} : x));
+  };
+
+  return (
+    <div className="master-grid">
+      {/* TEAM */}
+      <div>
+        <div className="sec-head" style={{marginBottom:12}}>
+          <h2>👥 Miembros del equipo</h2>
+          <span className="count-badge">{teamMembers.length}</span>
+        </div>
+        <div className="table-wrap" style={{marginBottom:0}}>
+          <div className="master-add">
+            <input className="fi" placeholder="Nombre completo..." value={nm}
+              onChange={e => setNm(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && addMember()}
+              style={{flex:1,minWidth:150}} />
+            <button className="btn btn-primary btn-sm" onClick={addMember}>+ Añadir</button>
+          </div>
+          <div style={{maxHeight:480,overflowY:'auto'}}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th style={{textAlign:'center',width:90}}>Asignaciones</th>
+                  <th style={{width:44}}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamMembers.map(m => {
+                  const n = assignments.filter(a => a.member===m).length;
+                  return (
+                    <tr key={m}>
+                      <td style={{fontWeight:500}}>{m}</td>
+                      <td style={{textAlign:'center'}}>
+                        <span style={{background:'#EEF2FF',color:'#4F46E5',padding:'2px 9px',borderRadius:20,fontSize:11,fontWeight:700}}>{n}</span>
+                      </td>
+                      <td>
+                        <button className="btn btn-ghost btn-sm" onClick={() => delMember(m)} style={{color:'#EF4444',padding:'3px 7px'}}>✕</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* PROJECTS */}
+      <div>
+        <div className="sec-head" style={{marginBottom:12}}>
+          <h2>📋 Proyectos</h2>
+          <span className="count-badge">{projects.length}</span>
+        </div>
+        <div className="table-wrap">
+          <div className="master-add" style={{gap:6}}>
+            <input className="fi" placeholder="Nombre del proyecto..." value={np}
+              onChange={e => setNp(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && addProject()}
+              style={{flex:2,minWidth:130}} />
+            <select className="fi" value={nn} onChange={e => setNn(e.target.value)} style={{flex:1,minWidth:110}}>
+              {NATURES.map(n => <option key={n}>{n}</option>)}
+            </select>
+            <select className="fi" value={ns} onChange={e => setNs(e.target.value)} style={{flex:1,minWidth:100}}>
+              {STATUSES.map(s => <option key={s}>{s}</option>)}
+            </select>
+            <button className="btn btn-primary btn-sm" onClick={addProject}>+ Añadir</button>
+          </div>
+          <div style={{maxHeight:480,overflowY:'auto'}}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Proyecto</th>
+                  <th style={{minWidth:100}}>Naturaleza</th>
+                  <th style={{minWidth:100}}>Estado</th>
+                  <th style={{width:44}}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map(p => (
+                  <tr key={p.name}>
+                    <td style={{fontWeight:500,fontSize:13}}>{p.name}</td>
+                    <td>
+                      <select className="isel" value={p.nature||''} onChange={e => updProjectNature(p.name, e.target.value)}
+                        style={{color:{Product:'#0369A1',Transformation:'#7C3AED',Mixed:'#059669',Enterprise:'#C2410C'}[p.nature]||'#64748B'}}>
+                        <option value="">—</option>
+                        {NATURES.map(n => <option key={n}>{n}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <select className="isel" value={p.status} onChange={e => updProjectStatus(p.name, e.target.value)}
+                        style={{color:STATUS_COLOR[p.status]||'#64748B'}}>
+                        {STATUSES.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      <button className="btn btn-ghost btn-sm" onClick={() => delProject(p.name)} style={{color:'#EF4444',padding:'3px 7px'}}>✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ADD MODAL ────────────────────────────────────────────────────────────────
+function AddModal({ teamMembers, projects, onClose, onAdd }) {
+  const [f, setF] = useState({
+    project: projects[0]?.name || '',
+    nature: projects[0]?.nature || '',
+    status: 'Confirmed',
+    member: teamMembers[0] || '',
+    comment: ''
+  });
+  const set = (k, v) => setF(p => ({...p, [k]:v}));
+
+  useEffect(() => {
+    const proj = projects.find(p => p.name === f.project);
+    if (proj) set('nature', proj.nature || '');
+  }, [f.project]);
+
+  return (
+    <div className="overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-head">
+          <h3>Nueva asignación de proyecto</h3>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{fontSize:16,padding:'3px 8px'}}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="fg">
+            <label className="fl">Proyecto</label>
+            <select className="fi" value={f.project} onChange={e => set('project', e.target.value)}>
+              {projects.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="fi-grid">
+            <div className="fg">
+              <label className="fl">Naturaleza</label>
+              <select className="fi" value={f.nature} onChange={e => set('nature', e.target.value)}>
+                <option value="">—</option>
+                {NATURES.map(n => <option key={n}>{n}</option>)}
+              </select>
+            </div>
+            <div className="fg">
+              <label className="fl">Estado</label>
+              <select className="fi" value={f.status} onChange={e => set('status', e.target.value)}>
+                {STATUSES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="fg">
+            <label className="fl">Miembro del equipo</label>
+            <select className="fi" value={f.member} onChange={e => set('member', e.target.value)}>
+              <option value="">Sin asignar</option>
+              {teamMembers.map(m => <option key={m}>{m}</option>)}
+            </select>
+          </div>
+          <div className="fg" style={{marginBottom:0}}>
+            <label className="fl">Comentario (opcional)</label>
+            <input className="fi" value={f.comment} onChange={e => set('comment', e.target.value)} placeholder="Notas sobre esta asignación..." />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" onClick={() => onAdd(f)}>Crear asignación</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ROOT ─────────────────────────────────────────────────────────────────
+function App() {
+  const [view, setView] = useState('dashboard');
+  const [month, setMonth] = useState('MARCH');
+  const [assignments, setAssignments] = useState(INIT_ASSIGN);
+  const [teamMembers, setTeamMembers] = useState(INIT_TEAM);
+  const [projects, setProjects] = useState(() => {
+    const seen = new Map();
+    INIT_ASSIGN.forEach(a => { if (!seen.has(a.project)) seen.set(a.project, { name:a.project, nature:a.nature, status:a.status }); });
+    return [...seen.values()];
+  });
+
+  const nav = [
+    { id:'dashboard', icon:'◈', label:'Dashboard' },
+    { id:'byproject', icon:'▦', label:'Por proyecto' },
+    { id:'bymember',  icon:'▤', label:'Por miembro' },
+    { id:'master',    icon:'◧', label:'Configuración' },
+  ];
+
+  const titles = {
+    dashboard: 'Dashboard',
+    byproject: 'Vista por proyecto',
+    bymember:  'Capacidad por miembro',
+    master:    'Configuración del equipo'
+  };
+
+  const overloaded = (() => {
+    const mc = MONTHS_CFG.find(m => m.name === month);
+    const wk = mc.weeks.map(w => `${mc.abbr}_${w}`);
+    const cap = computeCap(assignments, teamMembers);
+    return teamMembers.filter(m => wk.some(w => (cap[m][w]||0) > 1.005)).length;
+  })();
+
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <h1>⬡ Ops Capacity</h1>
+          <p>Gestión de staffing</p>
+        </div>
+        <nav className="sidebar-nav">
+          {nav.map(item => (
+            <div key={item.id} className={`nav-item ${view===item.id?'active':''}`} onClick={() => setView(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              {item.label}
+              {item.id==='bymember' && overloaded > 0 && (
+                <span style={{marginLeft:'auto',background:'#FEF2F2',color:'#EF4444',fontSize:10,fontWeight:800,padding:'1px 6px',borderRadius:20}}>{overloaded}</span>
+              )}
+            </div>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          {teamMembers.length} miembros · {projects.length} proyectos<br/>
+          {assignments.filter(a=>a.status==='Confirmed').length} asignaciones activas
+        </div>
+      </aside>
+
+      <main className="main">
+        <div className="topbar">
+          <span className="topbar-title">{titles[view]}</span>
+          <span className="topbar-sub">
+            {overloaded > 0
+              ? <span style={{color:'#EF4444',fontWeight:600}}>⚠ {overloaded} miembro{overloaded>1?'s':''} con sobrecarga en {month.substring(0,3)}</span>
+              : <span style={{color:'#10B981',fontWeight:500}}>✓ Sin sobrecargas detectadas en {month.substring(0,3)}</span>}
+          </span>
+        </div>
+        <div className="content">
+          {view==='dashboard' && <Dashboard assignments={assignments} teamMembers={teamMembers} month={month} setMonth={setMonth} />}
+          {view==='byproject' && <ByProject assignments={assignments} setAssignments={setAssignments} teamMembers={teamMembers} projects={projects} month={month} setMonth={setMonth} />}
+          {view==='bymember'  && <ByMember  assignments={assignments} teamMembers={teamMembers} month={month} setMonth={setMonth} />}
+          {view==='master'    && <Master teamMembers={teamMembers} setTeamMembers={setTeamMembers} projects={projects} setProjects={setProjects} assignments={assignments} setAssignments={setAssignments} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
