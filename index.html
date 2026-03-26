@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medusa — Capacity Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F2F8;--surface:#fff;--s2:#F7F8FC;
+  --border:#E4E8F0;--border2:#CBD5E1;
+  --text:#1E293B;--muted:#64748B;--subtle:#94A3B8;
+  --accent:#4F46E5;--acc-l:#EEF2FF;--acc-h:#4338CA;
+  --ok:#10B981;--ok-l:#ECFDF5;
+  --warn:#F59E0B;--warn-l:#FFFBEB;
+  --err:#EF4444;--err-l:#FEF2F2;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --r:10px;--r2:6px;
+}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:10}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.sb-logo h1{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.sb-logo p{font-size:11px;color:var(--muted);margin-top:2px}
+.sb-nav{flex:1;padding:12px 8px}
+.nv{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r2);cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);transition:.15s;margin-bottom:2px;user-select:none}
+.nv:hover{background:var(--bg);color:var(--text)}
+.nv.on{background:var(--acc-l);color:var(--accent)}
+.nv-icon{font-size:15px;width:18px;text-align:center}
+.nv-badge{margin-left:auto;background:#FEF2F2;color:var(--err);font-size:10px;font-weight:800;padding:1px 6px;border-radius:20px}
+.sb-foot{padding:14px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--subtle);line-height:1.7}
+.main{margin-left:230px;flex:1;display:flex;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.tb-title{font-size:16px;font-weight:600}
+.tb-sub{font-size:12px}
+.content{padding:24px 28px}
+.view{display:none}.view.on{display:block}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r2);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;font-family:inherit;white-space:nowrap}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--acc-h)}
+.btn-s{background:var(--surface);color:var(--text);border:1px solid var(--border2)}.btn-s:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--muted);border:none;font-family:inherit;cursor:pointer;font-size:12px;padding:3px 7px;border-radius:4px}.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-del{color:var(--err)!important}
+.mtabs{display:flex;gap:4px;background:var(--surface);padding:3px;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:18px;width:fit-content}
+.mtab{padding:5px 14px;border-radius:4px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--muted);transition:.15s;user-select:none}
+.mtab:hover{color:var(--text)}
+.mtab.on{background:var(--accent);color:#fff}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sh h2{font-size:14.5px;font-weight:600}
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;box-shadow:var(--sh)}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--s2);color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}
+thead th.wh{background:#F1F4FF;color:var(--accent);text-align:center;min-width:52px;font-size:11px;padding:8px 4px}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#FAFBFE}
+td{padding:8px 12px;vertical-align:middle}
+td.wc{text-align:center;padding:4px;min-width:52px}
+.ac{display:inline-flex;align-items:center;justify-content:center;width:42px;height:26px;border-radius:4px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:.1s}
+.ac-e{color:var(--subtle)}.ac-e:hover{background:var(--bg);border-color:var(--border)}
+.ac-l{background:#ECFDF5;color:#059669;border-color:#6EE7B7}.ac-l:hover{background:#D1FAE5}
+.ac-m{background:#F1F5F9;color:#64748B;border-color:#CBD5E1}.ac-m:hover{background:#E2E8F0}
+.ac-h{background:#FEF2F2;color:var(--err);border-color:#FECACA}.ac-h:hover{background:#FECACA}
+.ac-input{width:42px;height:26px;border:1.5px solid var(--accent);border-radius:4px;font-size:11.5px;font-weight:600;text-align:center;outline:none;background:#fff;font-family:inherit;color:var(--accent)}
+.cc{display:inline-flex;align-items:center;justify-content:center;width:48px;height:26px;border-radius:4px;font-size:12px;font-weight:700}
+.cc-ok{background:#ECFDF5;color:#059669}
+.cc-md{background:#F1F5F9;color:#64748B}
+.cc-ov{background:#FEF2F2;color:var(--err)}
+.cc-zz{background:var(--bg);color:var(--subtle);font-weight:400}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-co{background:var(--ok-l);color:#059669}
+.b-pr{background:#FFF7ED;color:#C2410C}
+.b-pa{background:var(--bg);color:var(--muted)}
+.b-fi{background:#F1F5F9;color:var(--subtle)}
+.nb{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:500}
+.n-pr{background:#E0F2FE;color:#0369A1}
+.n-tr{background:#F3E8FF;color:#7C3AED}
+.n-mi{background:#ECFDF5;color:#059669}
+.n-en{background:#FFF7ED;color:#C2410C}
+.isel{border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;color:inherit;padding:0;outline:none;max-width:115px}
+.stats-row{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;flex:1;min-width:140px;box-shadow:var(--sh)}
+.stat-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-.5px;line-height:1}
+.stat-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pb-wrap{flex:1;background:#F1F5F9;border-radius:4px;height:7px;overflow:hidden}
+.pb{height:100%;border-radius:4px;transition:width .4s}
+.legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ld{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted)}
+.ld-dot{width:10px;height:10px;border-radius:2px}
+.alert-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:#991B1B;display:flex;align-items:center;gap:8px}
+.add-bar{display:flex;gap:8px;padding:14px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:flex-end}
+.cnt-badge{background:var(--acc-l);color:var(--accent);padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:700}
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border2);border-radius:var(--r2);font-family:inherit;font-size:14px;color:var(--text);outline:none;transition:border-color .15s;background:var(--surface)}
+.fi:focus{border-color:var(--accent)}
+.fi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:var(--surface);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);width:500px;max-width:90vw;max-height:92vh;overflow-y:auto}
+.modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px 24px}
+.modal-foot{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end}
+.login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 48px rgba(79,70,229,.12),0 2px 12px rgba(0,0,0,.06);width:100%;max-width:380px;padding:44px 40px 36px;display:flex;flex-direction:column;align-items:center}
+.login-card .fi{margin-bottom:0}
+.login-card .fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.login-err{background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;padding:9px 14px;font-size:12.5px;color:#991B1B;width:100%;text-align:center}
+.login-dots{display:flex;gap:5px;margin-top:24px;margin-bottom:32px}
+.login-dot{width:5px;height:5px;border-radius:50%;background:var(--border2)}
+.login-dot.on{background:var(--accent)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+</head>
+<body>
+<!-- ── LOGIN SCREEN ─────────────────────────────────────────────────── -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <!-- logo -->
+    <svg width="48" height="48" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:4px">
+      <circle cx="16" cy="16" r="14.5" stroke="#4F46E5" stroke-width="1" stroke-dasharray="2.5 2.5" opacity=".4"/>
+      <circle cx="16" cy="16" r="9" stroke="#4F46E5" stroke-width="1" opacity=".25"/>
+      <line x1="16" y1="2" x2="16" y2="7" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="16" y1="25" x2="16" y2="30" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="2" y1="16" x2="7" y2="16" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="25" y1="16" x2="30" y2="16" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+      <line x1="5.1" y1="5.1" x2="8.6" y2="8.6" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+      <line x1="23.4" y1="23.4" x2="26.9" y2="26.9" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+      <line x1="26.9" y1="5.1" x2="23.4" y2="8.6" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+      <line x1="8.6" y1="23.4" x2="5.1" y2="26.9" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+      <polygon points="16,10.5 20.5,13 20.5,19 16,21.5 11.5,19 11.5,13" stroke="#4F46E5" stroke-width="1.2" fill="#EEF2FF" opacity=".9"/>
+      <circle cx="16" cy="16" r="2" fill="#4F46E5"/>
+      <circle cx="16" cy="7" r=".9" fill="#4F46E5" opacity=".5"/>
+      <circle cx="16" cy="25" r=".9" fill="#4F46E5" opacity=".5"/>
+      <circle cx="7" cy="16" r=".9" fill="#4F46E5" opacity=".5"/>
+      <circle cx="25" cy="16" r=".9" fill="#4F46E5" opacity=".5"/>
+    </svg>
+    <!-- wordmark -->
+    <div style="font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--text);margin-top:10px;line-height:1">Medusa</div>
+    <div style="font-size:11px;color:var(--subtle);letter-spacing:.7px;text-transform:uppercase;margin-top:4px;margin-bottom:0">Capacity Platform</div>
+    <!-- decorative dots -->
+    <div class="login-dots">
+      <div class="login-dot on"></div>
+      <div class="login-dot on"></div>
+      <div class="login-dot"></div>
+    </div>
+    <!-- form -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="fl" style="margin-bottom:6px">Email</label>
+        <input class="fi" id="login-email" type="email" placeholder="your@company.com"
+          autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-pwd').focus()">
+      </div>
+      <div>
+        <label class="fl" style="margin-bottom:6px">Password</label>
+        <div style="position:relative">
+          <input class="fi" id="login-pwd" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+            autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')doLogin()"
+            style="padding-right:42px">
+          <button onclick="togglePwd()" tabindex="-1"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--subtle);font-size:13px;padding:4px"
+            title="Show/hide password" id="pwd-eye">&#128065;</button>
+        </div>
+      </div>
+      <div id="login-err" style="display:none"></div>
+      <button class="btn btn-p" onclick="doLogin()"
+        style="width:100%;justify-content:center;padding:11px;font-size:14px;margin-top:4px;border-radius:8px">
+        Sign in
+      </button>
+    </div>
+    <div style="margin-top:20px;font-size:11px;color:var(--subtle);text-align:center">
+      Medusa &mdash; internal use only
+    </div>
+  </div>
+</div>
+
+<!-- ── APP (hidden until login) ────────────────────────────────────── -->
+<div class="app" id="app-root" style="display:none">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div style="display:flex;align-items:center;gap:11px">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- outer ring -->
+          <circle cx="16" cy="16" r="14.5" stroke="#4F46E5" stroke-width="1" stroke-dasharray="2.5 2.5" opacity=".4"/>
+          <!-- inner ring -->
+          <circle cx="16" cy="16" r="9" stroke="#4F46E5" stroke-width="1" opacity=".25"/>
+          <!-- radiating spokes -->
+          <line x1="16" y1="2" x2="16" y2="7" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="16" y1="25" x2="16" y2="30" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="2" y1="16" x2="7" y2="16" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="25" y1="16" x2="30" y2="16" stroke="#4F46E5" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="5.1" y1="5.1" x2="8.6" y2="8.6" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+          <line x1="23.4" y1="23.4" x2="26.9" y2="26.9" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+          <line x1="26.9" y1="5.1" x2="23.4" y2="8.6" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+          <line x1="8.6" y1="23.4" x2="5.1" y2="26.9" stroke="#4F46E5" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+          <!-- central hexagon -->
+          <polygon points="16,10.5 20.5,13 20.5,19 16,21.5 11.5,19 11.5,13" stroke="#4F46E5" stroke-width="1.2" fill="#EEF2FF" opacity=".9"/>
+          <!-- centre dot -->
+          <circle cx="16" cy="16" r="2" fill="#4F46E5"/>
+          <!-- corner ticks at 45° -->
+          <circle cx="16" cy="7" r=".9" fill="#4F46E5" opacity=".5"/>
+          <circle cx="16" cy="25" r=".9" fill="#4F46E5" opacity=".5"/>
+          <circle cx="7" cy="16" r=".9" fill="#4F46E5" opacity=".5"/>
+          <circle cx="25" cy="16" r=".9" fill="#4F46E5" opacity=".5"/>
+        </svg>
+        <div>
+          <div style="font-size:16px;font-weight:700;letter-spacing:-.4px;color:#1E293B;line-height:1">Medusa</div>
+          <div style="font-size:10px;color:#94A3B8;letter-spacing:.6px;text-transform:uppercase;margin-top:2px;line-height:1">Capacity Platform</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-foot" id="sb-foot"></div>
+    <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px">
+      <button onclick="openChangePwd()" class="nv" style="font-size:12px;color:var(--muted);justify-content:flex-start;padding:7px 10px;font-weight:400">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" style="opacity:.6"><path d="M10 2a4 4 0 0 1 4 4v1h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1V6a4 4 0 0 1 4-4zm0 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm0-7a2 2 0 0 0-2 2v1h4V6a2 2 0 0 0-2-2z" fill="currentColor"/></svg>
+        Change password
+      </button>
+      <button onclick="doLogout()" class="nv" style="font-size:12px;color:#EF4444;justify-content:flex-start;padding:7px 10px;font-weight:500">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" style="opacity:.8"><path d="M3 3h7v2H5v10h5v2H3V3zm10.293 3.293 3.414 3.414-3.414 3.414-1.414-1.414L13.586 10H7V8h6.586l-1.707-1.707 1.414-1.414z" fill="currentColor"/></svg>
+        Sign out
+      </button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <span class="tb-title" id="tb-title">Dashboard</span>
+      <span class="tb-sub" id="tb-sub"></span>
+      <div id="auth-bar" style="display:flex;align-items:center;gap:10px;margin-left:auto"></div>
+    </div>
+    <div class="content">
+      <div id="view-dashboard" class="view"></div>
+      <div id="view-byproject" class="view"></div>
+      <div id="view-bymember"  class="view"></div>
+      <div id="view-master"    class="view"></div>
+      <div id="view-export"    class="view"></div>
+    </div>
+  </main>
+</div><!-- /app-root -->
+<script>
+var MONTHS=[
+  {name:'MARCH',    abbr:'MAR',weeks:['W1','W2','W3','W4']},
+  {name:'APRIL',    abbr:'APR',weeks:['W1','W2','W3','W4','W5']},
+  {name:'MAY',      abbr:'MAY',weeks:['W1','W2','W3','W4']},
+  {name:'JUNE',     abbr:'JUN',weeks:['W1','W2','W3','W4']},
+  {name:'JULY',     abbr:'JUL',weeks:['W1','W2','W3','W4','W5']},
+  {name:'AUGUST',   abbr:'AUG',weeks:['W1','W2','W3','W4']},
+  {name:'SEPTEMBER',abbr:'SEP',weeks:['W1','W2','W3','W4']},
+  {name:'OCTOBER',  abbr:'OCT',weeks:['W1','W2','W3','W4','W5']},
+  {name:'NOVEMBER', abbr:'NOV',weeks:['W1','W2','W3','W4']},
+  {name:'DECEMBER', abbr:'DEC',weeks:['W1','W2','W3','W4']}
+];
+var ALL_WEEKS=MONTHS.reduce(function(a,m){return a.concat(m.weeks.map(function(w){return m.abbr+'_'+w;}));},[]);
+var STATUSES=['Confirmed','Probable','Paused','Finished'];
+var NATURES=['Product','Transformation','Mixed','Enterprise'];
+var SCOL={Confirmed:'#059669',Probable:'#C2410C',Paused:'#64748B',Finished:'#94A3B8'};
+
+var teamMembers=['Shervin Shashavari','Laura Barranco','Diego N\u00fa\u00f1ez','Adriana Panad\u00e9s',"Sergio D'Uva",'Borja Herraiz','Laura Otero','Diego Ram\u00edrez','Toni Bordoy','Ezequiel Sandaza','\u00c1lvaro Gonz\u00e1lez','\u00c1lex Dobarco','Juan Cubillo','Elena Arg\u00fcelles','Paula Le\u00f3n','Alberto Asensio','Francesc Cabana','Adri\u00e1n Escofet'];
+
+var projects=[
+{name:'Kuwait STC',nature:'',status:'Probable',owner:''},
+{name:'Tradisa',nature:'Transformation',status:'Probable',owner:''},
+{name:'Hendrix Cloud',nature:'Product',status:'Finished',owner:''},
+{name:'Hendrix Pricing',nature:'Product',status:'Confirmed',owner:''},
+{name:'Fagor Laundry Academy',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'ONCE',nature:'',status:'Probable',owner:''},
+{name:'Aig\u00fces de Barcelona',nature:'Mixed',status:'Confirmed',owner:''},
+{name:'Siemens PM',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'OBS',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'Nestl\u00e9 ARM',nature:'Product',status:'Paused',owner:''},
+{name:'Nestl\u00e9 Business arch.',nature:'Mixed',status:'Probable',owner:''},
+{name:'Nestl\u00e9 Global Innovation',nature:'Product',status:'Confirmed',owner:'Borja Herraiz'},
+{name:'Nestl\u00e9 Service manager',nature:'Transformation',status:'Probable',owner:''},
+{name:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'Asitur',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'Aliseda',nature:'Product',status:'Confirmed',owner:''},
+{name:'Anglo american',nature:'Product',status:'Confirmed',owner:'Diego Ram\u00edrez'},
+{name:'Instituto de empresa',nature:'Product',status:'Confirmed',owner:'Diego N\u00fa\u00f1ez'},
+{name:'IDOM',nature:'Transformation',status:'Confirmed',owner:''},
+{name:'Illies',nature:'Product',status:'Confirmed',owner:''},
+{name:'Laboral Kutxa',nature:'Product',status:'Confirmed',owner:''},
+{name:'Acciona',nature:'Transformation',status:'Confirmed',owner:''}
+];
+
+var uid=100;
+function mkid(){return ++uid;}
+
+var assignments=[
+{id:mkid(),project:'Kuwait STC',nature:'',status:'Probable',member:"Sergio D'Uva",comment:'Capacity free in March',allocations:{}},
+{id:mkid(),project:'Tradisa',nature:'Transformation',status:'Probable',member:"Sergio D'Uva",comment:'Paternity leave 1st May',allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+{id:mkid(),project:'Tradisa',nature:'Transformation',status:'Probable',member:'Juan Cubillo',comment:'',allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+{id:mkid(),project:'Tradisa',nature:'Transformation',status:'Probable',member:'Elena Arg\u00fcelles',comment:'',allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+{id:mkid(),project:'Hendrix Cloud',nature:'Product',status:'Finished',member:'',comment:'',allocations:{}},
+{id:mkid(),project:'Hendrix Pricing',nature:'Product',status:'Confirmed',member:'Ezequiel Sandaza',comment:'',allocations:{MAR_W1:.7,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:.7,APR_W3:.7,APR_W4:.7,APR_W5:.7}},
+{id:mkid(),project:'Fagor Laundry Academy',nature:'Transformation',status:'Confirmed',member:'Laura Otero',comment:'',allocations:{MAR_W4:.5,APR_W1:.5}},
+{id:mkid(),project:'ONCE',nature:'',status:'Probable',member:'Alberto Asensio',comment:'',allocations:{MAR_W1:0,MAR_W2:0,MAR_W3:0,MAR_W4:0}},
+{id:mkid(),project:'Aig\u00fces de Barcelona',nature:'Mixed',status:'Confirmed',member:'Toni Bordoy',comment:'',allocations:{APR_W1:.25,APR_W2:.25}},
+{id:mkid(),project:'Aig\u00fces de Barcelona',nature:'Mixed',status:'Confirmed',member:'Laura Barranco',comment:'',allocations:{}},
+{id:mkid(),project:'Siemens PM',nature:'Transformation',status:'Confirmed',member:'\u00c1lvaro Gonz\u00e1lez',comment:'',allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5}},
+{id:mkid(),project:'OBS',nature:'Transformation',status:'Confirmed',member:'Elena Arg\u00fcelles',comment:'',allocations:{MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8,JUN_W1:.8,JUN_W2:.8,JUN_W3:.8,JUN_W4:.8,JUL_W1:.8,JUL_W2:.8,JUL_W3:.8,JUL_W4:.8,JUL_W5:.8}},
+{id:mkid(),project:'OBS',nature:'Transformation',status:'Confirmed',member:'Adri\u00e1n Escofet',comment:'TBC',allocations:{APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8}},
+{id:mkid(),project:'OBS',nature:'Transformation',status:'Confirmed',member:'Francesc Cabana',comment:'New joiner',allocations:{MAY_W1:.8}},
+{id:mkid(),project:'OBS',nature:'Transformation',status:'Confirmed',member:'Alberto Asensio',comment:'',allocations:{APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5}},
+{id:mkid(),project:'Nestl\u00e9 ARM',nature:'Product',status:'Paused',member:'',comment:'Elliot initiative has been cancelled',allocations:{}},
+{id:mkid(),project:'Nestl\u00e9 Business arch.',nature:'Mixed',status:'Probable',member:'',comment:'',allocations:{}},
+{id:mkid(),project:'Nestl\u00e9 Global Innovation',nature:'Product',status:'Confirmed',member:'Borja Herraiz',comment:'',allocations:{APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+{id:mkid(),project:'Nestl\u00e9 Service manager',nature:'Transformation',status:'Probable',member:'Adriana Panad\u00e9s',comment:'',allocations:{APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:'Adriana Panad\u00e9s',comment:'',allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:'Paula Le\u00f3n',comment:'',allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:"Sergio D'Uva",comment:'',allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8,JUN_W1:.8,JUN_W2:.8,JUN_W3:.8,JUN_W4:.8,JUL_W1:.8,JUL_W2:.8,JUL_W3:.8,JUL_W4:.8,JUL_W5:.8}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:'\u00c1lvaro Gonz\u00e1lez',comment:'',allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:'Laura Otero',comment:'',allocations:{MAR_W1:.5,MAR_W2:.5,MAR_W3:1,MAR_W4:.5}},
+{id:mkid(),project:'Nestl\u00e9 US',nature:'Transformation',status:'Confirmed',member:'Juan Cubillo',comment:'',allocations:{MAR_W1:.2,MAR_W2:.2,MAR_W3:.2,MAR_W4:.2,APR_W1:.2,APR_W2:.2,APR_W3:.2,APR_W4:.2,APR_W5:.2,MAY_W1:.2,MAY_W2:.2,MAY_W3:.2,MAY_W4:.2}},
+{id:mkid(),project:'Asitur',nature:'Transformation',status:'Confirmed',member:'Juan Cubillo',comment:'',allocations:{MAR_W1:.8,MAR_W2:.8,MAR_W3:.8,MAR_W4:.8,APR_W1:.8,APR_W2:.8,APR_W3:.8,APR_W4:.8,APR_W5:.8,MAY_W1:.8,MAY_W2:.8,MAY_W3:.8,MAY_W4:.8}},
+{id:mkid(),project:'Aliseda',nature:'Product',status:'Confirmed',member:'Toni Bordoy',comment:'',allocations:{MAR_W1:.5,MAR_W2:.5}},
+{id:mkid(),project:'Aliseda',nature:'Product',status:'Confirmed',member:'Laura Barranco',comment:'',allocations:{MAR_W1:.15}},
+{id:mkid(),project:'Anglo american',nature:'Product',status:'Confirmed',member:'Diego Ram\u00edrez',comment:'',allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:1,MAY_W2:1,MAY_W3:1,MAY_W4:1,JUN_W1:1,JUN_W2:1,JUN_W3:1,JUN_W4:1,JUL_W1:1,JUL_W2:1,JUL_W3:1,JUL_W4:1,JUL_W5:1}},
+{id:mkid(),project:'Instituto de empresa',nature:'Product',status:'Confirmed',member:'Diego N\u00fa\u00f1ez',comment:'',allocations:{MAR_W1:1,MAR_W2:1,MAR_W3:1,MAR_W4:1,APR_W1:1,APR_W2:1}},
+{id:mkid(),project:'IDOM',nature:'Transformation',status:'Confirmed',member:'Toni Bordoy',comment:'',allocations:{MAR_W3:.75,MAR_W4:.75,APR_W1:.75}},
+{id:mkid(),project:'IDOM',nature:'Transformation',status:'Confirmed',member:'Alberto Asensio',comment:'',allocations:{MAR_W3:.25,MAR_W4:.25}},
+{id:mkid(),project:'Illies',nature:'Product',status:'Confirmed',member:'Alberto Asensio',comment:'',allocations:{MAR_W2:.5,MAR_W3:.5,MAR_W4:.5,APR_W1:.5,APR_W2:.5,APR_W3:.5,APR_W4:.5,APR_W5:.5,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+{id:mkid(),project:'Illies',nature:'Product',status:'Confirmed',member:'Francesc Cabana',comment:'',allocations:{MAR_W4:1,APR_W1:1,APR_W2:1,APR_W3:1,APR_W4:1,APR_W5:1,MAY_W1:.5,MAY_W2:.5,MAY_W3:.5,MAY_W4:.5,JUN_W1:.5,JUN_W2:.5,JUN_W3:.5,JUN_W4:.5,JUL_W1:.5,JUL_W2:.5,JUL_W3:.5,JUL_W4:.5,JUL_W5:.5}},
+{id:mkid(),project:'Laboral Kutxa',nature:'Product',status:'Confirmed',member:'Toni Bordoy',comment:'',allocations:{MAR_W2:.25,MAR_W3:.25,MAR_W4:.25}},
+{id:mkid(),project:'Acciona',nature:'Transformation',status:'Confirmed',member:'Laura Otero',comment:'',allocations:{APR_W1:.5,APR_W2:.5}}
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHAREPOINT INTEGRATION
+// Fill in the four values below once your Azure app is registered.
+// Set enabled:false to keep using localStorage only (default / dev mode).
+// ═══════════════════════════════════════════════════════════════════════════
+var SP={
+  enabled:   false,                     // ← set true after Azure setup
+  clientId:  'YOUR_CLIENT_ID',          // ← Azure app (client) ID
+  tenantId:  'YOUR_TENANT_ID',          // ← Azure directory (tenant) ID
+  siteUrl:   'https://YOURCOMPANY.sharepoint.com/sites/YOURSITE', // ← full SP site URL
+  lists:{members:'MedusaMembers',projects:'MedusaProjects',assignments:'MedusaAssignments'},
+  // runtime state (do not edit)
+  _app:null,_account:null,_siteId:null,_listIds:{},_memberSpIds:{}
+};
+
+// ── MSAL INIT ────────────────────────────────────────────────────────────
+function spInit(){
+  if(!SP.enabled||!window.msal)return;
+  SP._app=new msal.PublicClientApplication({
+    auth:{clientId:SP.clientId,authority:'https://login.microsoftonline.com/'+SP.tenantId,redirectUri:window.location.origin+window.location.pathname},
+    cache:{cacheLocation:'sessionStorage'}
+  });
+  SP._app.handleRedirectPromise().then(function(r){
+    if(r)SP._account=r.account;
+    else{var a=SP._app.getAllAccounts();if(a.length)SP._account=a[0];}
+    renderAuthBar();
+    if(SP._account){
+      showLoadingOverlay('Connecting to SharePoint\u2026');
+      spResolveIds().then(spLoadAll).then(function(){hideLoadingOverlay();render();}).catch(function(e){hideLoadingOverlay();console.warn('SP load failed, using local cache',e);render();});
+    }
+  }).catch(function(){renderAuthBar();});
+}
+
+// ── GET TOKEN (silent → popup fallback) ──────────────────────────────────
+function spToken(){
+  if(!SP._app)return Promise.resolve(null);
+  var req={scopes:['https://graph.microsoft.com/Sites.ReadWrite.All'],account:SP._account};
+  return SP._app.acquireTokenSilent(req).catch(function(){return SP._app.acquireTokenPopup(req);}).then(function(r){SP._account=r.account;return r.accessToken;});
+}
+
+// ── GRAPH FETCH WRAPPER ───────────────────────────────────────────────────
+function gFetch(method,path,body){
+  return spToken().then(function(token){
+    if(!token)throw new Error('Not authenticated');
+    var opts={method:method,headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json','Accept':'application/json'}};
+    if(body)opts.body=JSON.stringify(body);
+    return fetch('https://graph.microsoft.com/v1.0'+path,opts);
+  }).then(function(r){return method==='DELETE'?true:r.ok?r.json():r.json().then(function(e){throw e;});});
+}
+
+// ── RESOLVE SITE + LIST IDs ───────────────────────────────────────────────
+function spResolveIds(){
+  var host=SP.siteUrl.replace('https://','').split('/')[0];
+  var path='/'+SP.siteUrl.split(host)[1].replace(/^\//,'');
+  return gFetch('GET','/sites/'+host+':'+path).then(function(site){
+    SP._siteId=site.id;
+    return gFetch('GET','/sites/'+SP._siteId+'/lists?$select=id,displayName&$top=100');
+  }).then(function(r){
+    r.value.forEach(function(l){
+      Object.keys(SP.lists).forEach(function(k){if(SP.lists[k]===l.displayName)SP._listIds[k]=l.id;});
+    });
+  });
+}
+
+// ── LOAD ALL FROM SHAREPOINT ──────────────────────────────────────────────
+function spLoadAll(){
+  if(!SP._siteId)return Promise.resolve(false);
+  var b='/sites/'+SP._siteId+'/lists/';
+  return Promise.all([
+    gFetch('GET',b+SP._listIds.members+'/items?$expand=fields&$top=999'),
+    gFetch('GET',b+SP._listIds.projects+'/items?$expand=fields&$top=999'),
+    gFetch('GET',b+SP._listIds.assignments+'/items?$expand=fields&$top=999')
+  ]).then(function(res){
+    // members
+    if(res[0].value.length){
+      teamMembers=[];SP._memberSpIds={};
+      res[0].value.forEach(function(i){if(i.fields.Title){teamMembers.push(i.fields.Title);SP._memberSpIds[i.fields.Title]=i.id;}});
+    }
+    // projects
+    if(res[1].value.length){
+      projects=res[1].value.map(function(i){
+        return{name:i.fields.Title||'',nature:i.fields.Nature||'',status:i.fields.ProjectStatus||'',owner:i.fields.Owner||'',_spId:i.id};
+      });
+    }
+    // assignments
+    if(res[2].value.length){
+      assignments=res[2].value.map(function(i){
+        var f=i.fields;var allocs={};try{allocs=JSON.parse(f.Allocations||'{}');}catch(e){}
+        var a={id:parseInt(f.AssignmentUid)||mkid(),project:f.Title||'',nature:f.Nature||'',status:f.AssignmentStatus||'',member:f.Member||'',comment:f.Comment||'',allocations:allocs,_spId:i.id};
+        if(a.id>uid)uid=a.id;return a;
+      });
+    }
+    saveLocalOnly();return true;
+  });
+}
+
+// ── LOCAL CACHE (always fast) ─────────────────────────────────────────────
+function saveLocalOnly(){
+  try{
+    localStorage.setItem('medusa_team',JSON.stringify(teamMembers));
+    localStorage.setItem('medusa_projects',JSON.stringify(projects));
+    localStorage.setItem('medusa_assignments',JSON.stringify(assignments));
+    localStorage.setItem('medusa_uid',String(uid));
+  }catch(e){}
+}
+
+// ── SAVESTATE: local immediately + SharePoint async ──────────────────────
+function saveState(){
+  saveLocalOnly();
+  // SharePoint writes happen in background — UI never waits
+}
+
+// ── SP WRITE HELPERS ──────────────────────────────────────────────────────
+function spSaveMember(name){
+  if(!SP.enabled||!SP._siteId||SP._memberSpIds[name])return;
+  gFetch('POST','/sites/'+SP._siteId+'/lists/'+SP._listIds.members+'/items',{fields:{Title:name}})
+    .then(function(r){SP._memberSpIds[name]=r.id;}).catch(function(){});
+}
+function spDeleteMember(name){
+  if(!SP.enabled||!SP._siteId||!SP._memberSpIds[name])return;
+  gFetch('DELETE','/sites/'+SP._siteId+'/lists/'+SP._listIds.members+'/items/'+SP._memberSpIds[name]).catch(function(){});
+  delete SP._memberSpIds[name];
+}
+function spSaveProject(p){
+  if(!SP.enabled||!SP._siteId)return;
+  var b='/sites/'+SP._siteId+'/lists/'+SP._listIds.projects;
+  var f={Title:p.name,Nature:p.nature||'',ProjectStatus:p.status||'',Owner:p.owner||''};
+  if(p._spId){gFetch('PATCH',b+'/items/'+p._spId+'/fields',f).catch(function(){});}
+  else{gFetch('POST',b+'/items',{fields:f}).then(function(r){p._spId=r.id;}).catch(function(){});}
+}
+function spDeleteProject(spId){
+  if(!SP.enabled||!SP._siteId||!spId)return;
+  gFetch('DELETE','/sites/'+SP._siteId+'/lists/'+SP._listIds.projects+'/items/'+spId).catch(function(){});
+}
+function spSaveAssignment(a){
+  if(!SP.enabled||!SP._siteId)return;
+  var b='/sites/'+SP._siteId+'/lists/'+SP._listIds.assignments;
+  var f={Title:a.project||'',Nature:a.nature||'',AssignmentStatus:a.status||'',Member:a.member||'',Comment:a.comment||'',Allocations:JSON.stringify(a.allocations||{}),AssignmentUid:a.id};
+  if(a._spId){gFetch('PATCH',b+'/items/'+a._spId+'/fields',f).catch(function(){});}
+  else{gFetch('POST',b+'/items',{fields:f}).then(function(r){a._spId=r.id;}).catch(function(){});}
+}
+function spDeleteAssignment(spId){
+  if(!SP.enabled||!SP._siteId||!spId)return;
+  gFetch('DELETE','/sites/'+SP._siteId+'/lists/'+SP._listIds.assignments+'/items/'+spId).catch(function(){});
+}
+
+// ── AUTH UI ───────────────────────────────────────────────────────────────
+function spLogin(){
+  if(!SP._app)return;
+  SP._app.loginPopup({scopes:['https://graph.microsoft.com/Sites.ReadWrite.All']}).then(function(r){
+    SP._account=r.account;renderAuthBar();
+    showLoadingOverlay('Loading data from SharePoint\u2026');
+    spResolveIds().then(spLoadAll).then(function(){hideLoadingOverlay();render();}).catch(function(e){hideLoadingOverlay();console.warn(e);render();});
+  }).catch(function(){});
+}
+function spLogout(){
+  if(!SP._app||!SP._account)return;
+  SP._app.logoutPopup({account:SP._account}).then(function(){SP._account=null;renderAuthBar();});
+}
+function renderAuthBar(){
+  var el=document.getElementById('auth-bar');if(!el)return;
+  if(!SP.enabled){el.innerHTML='<span style="font-size:11px;background:#F1F5F9;color:#94A3B8;padding:3px 10px;border-radius:20px;letter-spacing:.3px">Local mode</span>';return;}
+  if(SP._account){
+    var initials=(SP._account.name||SP._account.username||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    el.innerHTML='<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">'+initials+'</div>'
+      +'<span style="font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(SP._account.name||SP._account.username)+'</span>'
+      +'<button class="btn btn-s btn-sm" onclick="spLogout()">Sign out</button></div>';
+  } else {
+    el.innerHTML='<button class="btn btn-p btn-sm" onclick="spLogin()" style="gap:6px">'
+      +'<svg width="14" height="14" viewBox="0 0 23 23" fill="none"><rect x="1" y="1" width="10" height="10" fill="#F35325"/><rect x="12" y="1" width="10" height="10" fill="#81BC06"/><rect x="1" y="12" width="10" height="10" fill="#05A6F0"/><rect x="12" y="12" width="10" height="10" fill="#FFBA08"/></svg>'
+      +'Sign in with Microsoft</button>';
+  }
+}
+
+// ── LOADING OVERLAY ───────────────────────────────────────────────────────
+function showLoadingOverlay(msg){
+  var el=document.getElementById('sp-loading');
+  if(el){el.style.display='flex';el.querySelector('.sp-msg').textContent=msg||'Loading\u2026';return;}
+  var div=document.createElement('div');div.id='sp-loading';
+  div.style.cssText='position:fixed;inset:0;background:rgba(240,242,248,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px;backdrop-filter:blur(4px)';
+  div.innerHTML='<svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" stroke="#E4E8F0" stroke-width="3" fill="none"/><circle cx="22" cy="22" r="18" stroke="#4F46E5" stroke-width="3" fill="none" stroke-dasharray="28 84" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 22 22" to="360 22 22" dur=".9s" repeatCount="indefinite"/></circle></svg>'
+    +'<div style="text-align:center"><p class="sp-msg" style="font-size:13px;font-weight:600;color:#1E293B;margin-bottom:4px">'+esc(msg||'Loading\u2026')+'</p><p style="font-size:11px;color:#94A3B8">Connecting to Microsoft 365</p></div>';
+  document.body.appendChild(div);
+}
+function hideLoadingOverlay(){var el=document.getElementById('sp-loading');if(el)el.remove();}
+
+// ── LOAD LOCAL CACHE ON STARTUP ───────────────────────────────────────────
+(function loadLocalCache(){
+  try{
+    var t=localStorage.getItem('medusa_team');
+    var p=localStorage.getItem('medusa_projects');
+    var a=localStorage.getItem('medusa_assignments');
+    var u=localStorage.getItem('medusa_uid');
+    if(t)teamMembers=JSON.parse(t);
+    if(p)projects=JSON.parse(p);
+    if(a)assignments=JSON.parse(a);
+    if(u)uid=parseInt(u)||uid;
+  }catch(e){}
+})();
+// ═══════════════════════════════════════════════════════════════════════════
+var currentView='dashboard';
+var currentMonth='MARCH';
+var sortProjAlpha=false;
+var sortMemberAlpha=false;
+
+function mc(){return MONTHS.filter(function(m){return m.name===currentMonth;})[0];}
+function wkeys(){var m=mc();return m.weeks.map(function(w){return m.abbr+'_'+w;});}
+
+function computeCap(){
+  var cap={};
+  teamMembers.forEach(function(m){cap[m]={};ALL_WEEKS.forEach(function(w){cap[m][w]=0;});});
+  assignments.forEach(function(a){
+    if(!a.member||!cap[a.member])return;
+    Object.keys(a.allocations).forEach(function(w){
+      if(cap[a.member][w]!==undefined)cap[a.member][w]=+(cap[a.member][w]+a.allocations[w]).toFixed(4);
+    });
+  });
+  return cap;
+}
+
+function overloadedCount(){
+  var cap=computeCap();var wk=wkeys();
+  return teamMembers.filter(function(m){return wk.some(function(w){return (cap[m][w]||0)>1.005;});}).length;
+}
+
+function pct(v){if(v==null)return'';if(v===0)return'0%';return Math.round(v*100)+'%';}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function statusBadge(s){
+  var cls={Confirmed:'b-co',Probable:'b-pr',Paused:'b-pa',Finished:'b-fi'}[s]||'b-pa';
+  var dot={Confirmed:'&#9679;',Probable:'&#9681;',Paused:'&#9208;',Finished:'&#10005;'};
+  return '<span class="badge '+cls+'">'+(dot[s]||'&middot;')+' '+esc(s)+'</span>';
+}
+
+function natureBadge(n){
+  if(!n)return'';
+  var cls={Product:'n-pr',Transformation:'n-tr',Mixed:'n-mi',Enterprise:'n-en'}[n]||'';
+  return '<span class="nb '+cls+'">'+esc(n)+'</span>';
+}
+
+function monthTabs(){
+  return '<div class="mtabs">'+MONTHS.map(function(m){
+    return '<div class="mtab'+(m.name===currentMonth?' on':'')+'" onclick="setMonth(\''+m.name+'\')">'+m.name.slice(0,3)+'</div>';
+  }).join('')+'</div>';
+}
+
+function acCls(v){
+  if(v==null)return'ac-e';
+  if(v>1.005)return'ac-h';
+  if(v>=0.8)return'ac-l';
+  if(v>0)return'ac-m';
+  return'ac-e';
+}
+
+function renderSidebar(){
+  var nav=[{id:'dashboard',icon:'&#9672;',label:'Dashboard'},{id:'byproject',icon:'&#9638;',label:'By Project'},{id:'bymember',icon:'&#9636;',label:'By Member'},{id:'master',icon:'&#9639;',label:'Settings'},{id:'export',icon:'&#8659;',label:'Export'}];
+  var over=overloadedCount();
+  document.getElementById('sb-nav').innerHTML=nav.map(function(n){
+    return '<div class="nv'+(currentView===n.id?' on':'')+'" onclick="setView(\''+n.id+'\')">'
+      +'<span class="nv-icon">'+n.icon+'</span>'+n.label
+      +(n.id==='bymember'&&over>0?'<span class="nv-badge">'+over+'</span>':'')
+      +'</div>';
+  }).join('');
+  var conf=assignments.filter(function(a){return a.status==='Confirmed';}).length;
+  document.getElementById('sb-foot').innerHTML=teamMembers.length+' members &middot; '+projects.length+' projects<br>'+conf+' active assignments';
+}
+
+function renderTopbar(){
+  var titles={dashboard:'Dashboard',byproject:'By Project',bymember:'Capacity by Member',master:'Team Settings',export:'Export'};
+  document.getElementById('tb-title').textContent=titles[currentView];
+  var over=overloadedCount();var sub=document.getElementById('tb-sub');
+  if(over>0)sub.innerHTML='<span style="color:#EF4444;font-weight:600">&#9888; '+over+' member'+(over>1?'s':'')+' overloaded in '+mc().name.slice(0,3)+'</span>';
+  else sub.innerHTML='<span style="color:#10B981;font-weight:500">&#10003; No overloads detected in '+mc().name.slice(0,3)+'</span>';
+}
+
+function renderDashboard(){
+  var wk=wkeys();var cap=computeCap();
+  var allP=[];var ps={};assignments.forEach(function(a){if(!ps[a.project]){ps[a.project]=1;allP.push(a.project);}});
+  var confirmed=allP.filter(function(p){return assignments.some(function(a){return a.project===p&&a.status==='Confirmed';});}).length;
+  var over=overloadedCount();
+  var tot=0,cnt=0;
+  teamMembers.forEach(function(m){wk.forEach(function(w){tot+=(cap[m][w]||0);cnt++;});});
+  var avg=cnt>0?tot/cnt:0;
+  var scounts=STATUSES.map(function(s){
+    var seen={};var n=0;
+    assignments.forEach(function(a){if(a.status===s&&!seen[a.project]){seen[a.project]=1;n++;}});
+    return{s:s,n:n};
+  });
+  var sbar={Confirmed:'#10B981',Probable:'#F59E0B',Paused:'#CBD5E1',Finished:'#E2E8F0'};
+  var active=teamMembers.filter(function(m){return wk.some(function(w){return (cap[m][w]||0)>0;});});
+  var avgCol=avg>1?'#EF4444':avg>=.8?'#10B981':'#94A3B8';
+  var overStyle=over>0?'border-color:#FECACA;background:#FFF8F8':'';
+  var overValCol=over>0?'#EF4444':'#10B981';
+
+  var barRows=scounts.map(function(x){
+    var w=allP.length?Math.round((x.n/allP.length)*100):0;
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      +statusBadge(x.s)
+      +'<div class="pb-wrap"><div class="pb" style="width:'+w+'%;background:'+sbar[x.s]+'"></div></div>'
+      +'<span style="font-size:14px;font-weight:700;min-width:22px;text-align:right">'+x.n+'</span>'
+      +'</div>';
+  }).join('');
+
+  // Load Alerts: members with overload (>100%) or underutilized (<80% avg) this month
+  var alertRows='';
+  var alertMembers=[];
+  teamMembers.forEach(function(m){
+    var vals=wk.map(function(w){return cap[m][w]||0;});
+    var hasAct=vals.some(function(v){return v>0;});
+    if(!hasAct)return;
+    var maxV=Math.max.apply(null,vals);
+    var avgV=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+    var isOver=maxV>1.005;
+    var isUnder=avgV<0.8;
+    if(isOver||isUnder)alertMembers.push({m:m,maxV:maxV,avgV:avgV,isOver:isOver,isUnder:isUnder});
+  });
+  if(alertMembers.length===0){
+    alertRows='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:80px;gap:6px">'
+      +'<span style="font-size:20px">&#10003;</span>'
+      +'<span style="font-size:12px;color:var(--muted)">No alerts for '+mc().name.slice(0,3)+'</span>'
+      +'</div>';
+  } else {
+    alertRows=alertMembers.map(function(x){
+      var tag=x.isOver
+        ? '<span style="background:#FEF2F2;color:#EF4444;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap">OVERLOAD '+Math.round(x.maxV*100)+'%</span>'
+        : '<span style="background:#F1F5F9;color:#64748B;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap">UNDERUSED '+Math.round(x.avgV*100)+'%</span>';
+      var barCol=x.isOver?'#EF4444':'#94A3B8';
+      var barW=Math.min(Math.max(x.isOver?x.maxV:x.avgV,0),1.5)/1.5*100;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        +'<div style="width:120px;font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.m)+'</div>'
+        +'<div class="pb-wrap"><div class="pb" style="width:'+barW+'%;background:'+barCol+'"></div></div>'
+        +tag
+        +'</div>';
+    }).join('');
+  }
+
+  document.getElementById('view-dashboard').innerHTML=
+    '<div class="sh"><h2>Team overview</h2>'+monthTabs()+'</div>'
+    +'<div class="stats-row">'
+    +'<div class="stat"><div class="stat-lbl">Team</div><div class="stat-val">'+teamMembers.length+'</div><div class="stat-sub">active members</div></div>'
+    +'<div class="stat"><div class="stat-lbl">Confirmed projects</div><div class="stat-val">'+confirmed+'</div><div class="stat-sub">of '+allP.length+' total</div></div>'
+    +'<div class="stat" style="'+overStyle+'"><div class="stat-lbl" style="'+(over>0?'color:#B91C1C':'')+'">&#9888; Overload</div><div class="stat-val" style="color:'+overValCol+'">'+over+'</div><div class="stat-sub">in '+mc().name.slice(0,3)+'</div></div>'
+    +'<div class="stat"><div class="stat-lbl">Avg capacity ('+mc().name.slice(0,3)+')</div><div class="stat-val" style="color:'+avgCol+'">'+Math.round(avg*100)+'%</div><div class="stat-sub">team average</div></div>'
+    +'</div>'
+    +'<div class="g2">'
+    +'<div class="card" style="padding:20px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:14px">Project status</div>'+barRows+'</div>'
+    +'<div class="card" style="padding:20px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+    +'<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)">Load alerts &mdash; '+mc().name.slice(0,3)+'</span>'
+    +(alertMembers.length>0?'<span style="background:'+(alertMembers.some(function(x){return x.isOver;})?'#FEF2F2':'#F1F5F9')+';color:'+(alertMembers.some(function(x){return x.isOver;})?'#EF4444':'#64748B')+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">'+alertMembers.length+' alert'+(alertMembers.length>1?'s':'')+'</span>':'')
+    +'</div>'
+    +alertRows
+    +'</div>'
+    +'</div>';
+}
+
+function renderByProject(){
+  var wk=wkeys();var m=mc();
+  var ordered=[];var seen={};
+  assignments.forEach(function(a){if(!seen[a.project]){seen[a.project]=[];ordered.push(a.project);}seen[a.project].push(a);});
+  if(sortProjAlpha){ordered.sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});}
+  var bgs=['#ffffff','#FAFBFF'];var pi=-1;var pseen={};
+  var rows=[];
+  ordered.forEach(function(proj){
+    var group=seen[proj];
+    if(!pseen[proj]){pseen[proj]=1;pi++;}
+    var bg=bgs[pi%2];
+    group.forEach(function(row,ri){
+      var projCell=ri===0?'<td rowspan="'+group.length+'" style="font-weight:600;font-size:13px;border-right:1px solid var(--border);background:'+bg+';vertical-align:top;padding-top:10px">'+esc(row.project)+'</td>':'';
+      var projObj=null;for(var pi2=0;pi2<projects.length;pi2++){if(projects[pi2].name===row.project){projObj=projects[pi2];break;}}
+      var ownerCell=ri===0?'<td rowspan="'+group.length+'" style="font-size:12px;color:var(--muted);border-right:2px solid var(--border);background:'+bg+';vertical-align:top;padding-top:10px">'+(projObj&&projObj.owner?'<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:20px;height:20px;border-radius:50%;background:var(--acc-l);color:var(--accent);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">'+esc((projObj.owner||'').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase())+'</span>'+esc(projObj.owner)+'</span>':'<span style="color:var(--subtle);font-style:italic;font-size:11px">No owner</span>')+'</td>':'';
+      var statusOpts=STATUSES.map(function(s){return'<option value="'+s+'"'+(row.status===s?' selected':'')+'>'+s+'</option>';}).join('');
+      var wkCells=wk.map(function(wkey){
+        var v=row.allocations[wkey]!=null?row.allocations[wkey]:null;
+        var cls=acCls(v);var lbl=v==null?'+':pct(v);
+        return'<td class="wc"><div class="ac '+cls+'" data-id="'+row.id+'" data-wk="'+wkey+'" onclick="startEdit(this)">'+lbl+'</div></td>';
+      }).join('');
+      rows.push('<tr style="background:'+bg+'">'+projCell+ownerCell
+        +'<td>'+natureBadge(row.nature)+'</td>'
+        +'<td><select class="isel" style="color:'+(SCOL[row.status]||'#64748B')+'" onchange="updField('+row.id+',\'status\',this.value)">'+statusOpts+'</select></td>'
+        +'<td style="font-size:13px">'+(row.member?esc(row.member):'<span style="color:#94A3B8;font-style:italic;font-size:12px">Unassigned</span>')+'</td>'
+        +'<td style="font-size:12px;color:#94A3B8;cursor:pointer;min-width:110px" onclick="startEditComment(this,'+row.id+')" title="Click to edit">'+(row.comment?esc(row.comment):'<span style="color:var(--border2);font-style:italic">Add note…</span>')+'</td>'
+        +wkCells
+        +'<td><button class="btn-ghost btn-del" onclick="delAsgn('+row.id+')">&#10005;</button></td>'
+        +'</tr>');
+    });
+  });
+  var sortBtn='<button class="btn btn-s btn-sm" onclick="sortProjAlpha=!sortProjAlpha;renderByProject()" style="gap:5px">'
+    +(sortProjAlpha?'&#8593; A&ndash;Z on':'&#8661; Sort A&ndash;Z')+'</button>';
+  document.getElementById('view-byproject').innerHTML=
+    '<div class="sh"><h2>Assignments by project</h2><div style="display:flex;gap:8px">'+sortBtn+'<button class="btn btn-p btn-sm" onclick="openModal()">+ New assignment</button></div></div>'
+    +monthTabs()
+    +'<div class="card"><div class="tscroll"><table><thead><tr>'
+    +'<th style="min-width:150px">Project</th>'
+    +'<th style="min-width:130px">Owner</th>'
+    +'<th style="min-width:90px">Nature</th>'
+    +'<th style="min-width:105px">Status</th>'
+    +'<th style="min-width:140px">Member</th>'
+    +'<th style="min-width:110px">Comment</th>'
+    +m.weeks.map(function(w){return'<th class="wh">'+w+'</th>';}).join('')
+    +'<th style="width:36px"></th>'
+    +'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+}
+
+function renderByMember(){
+  var wk=wkeys();var m=mc();var cap=computeCap();
+  var over=teamMembers.filter(function(mb){return wk.some(function(w){return (cap[mb][w]||0)>1.005;});}).length;
+  function ccls(v){if(!v||v<0.005)return'cc-zz';if(v>1.005)return'cc-ov';if(v>=0.8)return'cc-ok';return'cc-md';}
+  var displayMembers=teamMembers.slice();
+  if(sortMemberAlpha){displayMembers.sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});}
+  var rows=displayMembers.map(function(member){
+    var vals=wk.map(function(w){return cap[member][w]||0;});
+    var avg=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+    var hasAct=vals.some(function(v){return v>0;});
+    var cells=vals.map(function(v,i){
+      return'<td class="wc"><div class="cc '+ccls(v)+'" title="'+esc(member)+' \u2013 '+m.weeks[i]+': '+Math.round(v*100)+'%">'+(v>=0.005?Math.round(v*100)+'%':'&mdash;')+'</div></td>';
+    }).join('');
+    return'<tr style="'+(hasAct?'':'opacity:.5')+'">'
+      +'<td style="font-weight:500">'+esc(member)+'</td>'
+      +cells
+      +'<td class="wc"><div class="cc '+ccls(avg)+'" style="font-weight:700">'+(avg>=0.005?Math.round(avg*100)+'%':'&mdash;')+'</div></td>'
+      +'</tr>';
+  }).join('');
+  var sortBtn='<button class="btn btn-s btn-sm" onclick="sortMemberAlpha=!sortMemberAlpha;renderByMember()" style="gap:5px">'
+    +(sortMemberAlpha?'&#8593; A&ndash;Z on':'&#8661; Sort A&ndash;Z')+'</button>';
+  document.getElementById('view-bymember').innerHTML=
+    '<div class="sh"><h2>Capacity by team member</h2>'
+    +'<div style="display:flex;align-items:center;gap:12px">'
+    +sortBtn
+    +'<div class="legend">'
+    +'<span class="ld"><span class="ld-dot" style="background:#F1F5F9;border:1px solid #CBD5E1"></span>&lt; 80%</span>'
+    +'<span class="ld"><span class="ld-dot" style="background:#DCFCE7;border:1px solid #86EFAC"></span>80&ndash;100%</span>'
+    +'<span class="ld"><span class="ld-dot" style="background:#FEF2F2;border:1px solid #FECACA"></span>&gt; 100%</span>'
+    +'</div></div></div>'
+    +(over>0?'<div class="alert-err">&#9888;&#65039; <strong>'+over+' member'+(over>1?'s':'')+'</strong> over capacity (&gt;100%) in at least one week of '+m.name+'</div>':'')
+    +monthTabs()
+    +'<div class="card"><div class="tscroll"><table><thead><tr>'
+    +'<th style="min-width:160px">Team member</th>'
+    +m.weeks.map(function(w){return'<th class="wh">'+w+'</th>';}).join('')
+    +'<th class="wh" style="font-weight:700;color:#334155">AVG</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+function renderMaster(){
+  // ── capacity helpers ──────────────────────────────────────────────────────
+  function memberCapAvg(m){
+    var vals=[];
+    assignments.forEach(function(a){if(a.member!==m)return;Object.keys(a.allocations).forEach(function(w){vals.push(a.allocations[w]);});});
+    if(!vals.length)return null;
+    return vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  }
+  function projCapAvg(name){
+    var vals=[];
+    assignments.forEach(function(a){if(a.project!==name)return;Object.keys(a.allocations).forEach(function(w){vals.push(a.allocations[w]);});});
+    if(!vals.length)return null;
+    return vals.reduce(function(a,b){return a+b;},0)/vals.length;
+  }
+  function capChip(v){
+    if(v===null)return'<span style="color:var(--subtle);font-size:12px">&mdash;</span>';
+    var col=v>1.005?'#EF4444':v>=0.8?'#059669':'#64748B';
+    var bg=v>1.005?'#FEF2F2':v>=0.8?'#ECFDF5':'#F1F5F9';
+    return'<span style="background:'+bg+';color:'+col+';font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">'+Math.round(v*100)+'%</span>';
+  }
+
+  // ── member rows ───────────────────────────────────────────────────────────
+  var memberRows=teamMembers.map(function(m){
+    var n=assignments.filter(function(a){return a.member===m;}).length;
+    var avg=memberCapAvg(m);
+    return'<tr><td style="font-weight:500">'+esc(m)+'</td>'
+      +'<td style="text-align:center"><span style="background:#EEF2FF;color:#4F46E5;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700">'+n+'</span></td>'
+      +'<td style="text-align:center">'+capChip(avg)+'</td>'
+      +'<td><button class="btn-ghost btn-del" onclick="delMember(this)" data-m="'+esc(m)+'">&#10005;</button></td></tr>';
+  }).join('');
+
+  // ── project rows ──────────────────────────────────────────────────────────
+  var ownerBaseOpts='<option value="">&mdash;</option>'+teamMembers.map(function(m){return'<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('');
+  var projRows=projects.map(function(p){
+    var nOpts=['','Product','Transformation','Mixed','Enterprise'].map(function(n){return'<option value="'+n+'"'+(p.nature===n?' selected':'')+'>'+(!n?'&mdash;':n)+'</option>';}).join('');
+    var sOpts=STATUSES.map(function(s){return'<option value="'+s+'"'+(p.status===s?' selected':'')+'>'+s+'</option>';}).join('');
+    var oOpts=ownerBaseOpts.replace('value="'+esc(p.owner||'')+'"','value="'+esc(p.owner||'')+'" selected');
+    var ncol={Product:'#0369A1',Transformation:'#7C3AED',Mixed:'#059669',Enterprise:'#C2410C'}[p.nature]||'#64748B';
+    var avg=projCapAvg(p.name);
+    return'<tr>'
+      +'<td style="font-weight:500;font-size:13px">'+esc(p.name)+'</td>'
+      +'<td><select class="isel" style="color:'+ncol+'" onchange="updProjNature(this)" data-name="'+esc(p.name)+'">'+nOpts+'</select></td>'
+      +'<td><select class="isel" style="color:'+(SCOL[p.status]||'#64748B')+'" onchange="updProjStatus(this)" data-name="'+esc(p.name)+'">'+sOpts+'</select></td>'
+      +'<td><select class="isel" style="color:#334155;max-width:130px" onchange="updProjOwner(this)" data-name="'+esc(p.name)+'">'+oOpts+'</select></td>'
+      +'<td style="text-align:center">'+capChip(avg)+'</td>'
+      +'<td><button class="btn-ghost btn-del" onclick="delProject(this)" data-name="'+esc(p.name)+'">&#10005;</button></td>'
+      +'</tr>';
+  }).join('');
+
+  // ── week options for bulk assign ──────────────────────────────────────────
+  var wkOpts=ALL_WEEKS.map(function(w){return'<option value="'+w+'">'+w.replace('_',' ')+'</option>';}).join('');
+  var memOptsBA='<option value="">-- Member --</option>'+teamMembers.map(function(m){return'<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('');
+  var projOptsBA='<option value="">-- Project --</option>'+projects.map(function(p){return'<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>';}).join('');
+  var ownerOptsAdd='<option value="">-- Owner --</option>'+teamMembers.map(function(m){return'<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('');
+
+  // ── render ────────────────────────────────────────────────────────────────
+  document.getElementById('view-master').innerHTML=
+    // top 2-col grid
+    '<div class="g2" style="margin-bottom:20px">'
+    // LEFT: Team members
+    +'<div>'
+    +'<div class="sh" style="margin-bottom:12px"><h2>&#128101; Team members</h2><span class="cnt-badge">'+teamMembers.length+'</span></div>'
+    +'<div class="card">'
+    +'<div class="add-bar"><input class="fi" id="inp-member" placeholder="Full name..." style="flex:1;min-width:150px" onkeydown="if(event.key===\'Enter\')addMember()"><button class="btn btn-p btn-sm" onclick="addMember()">+ Add</button></div>'
+    +'<div style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Name</th><th style="text-align:center;width:90px">Assignments</th><th style="text-align:center;width:90px">Cap. avg</th><th style="width:44px"></th></tr></thead><tbody>'+memberRows+'</tbody></table></div>'
+    +'</div></div>'
+    // RIGHT: Projects
+    +'<div>'
+    +'<div class="sh" style="margin-bottom:12px"><h2>&#128203; Projects</h2><span class="cnt-badge">'+projects.length+'</span></div>'
+    +'<div class="card">'
+    +'<div class="add-bar" style="gap:6px;flex-wrap:wrap">'
+    +'<input class="fi" id="inp-proj" placeholder="Project name..." style="flex:2;min-width:120px" onkeydown="if(event.key===\'Enter\')addProject()">'
+    +'<select class="fi" id="inp-nature" style="flex:1;min-width:105px">'+NATURES.map(function(n){return'<option>'+n+'</option>';}).join('')+'</select>'
+    +'<select class="fi" id="inp-status" style="flex:1;min-width:100px">'+STATUSES.map(function(s){return'<option>'+s+'</option>';}).join('')+'</select>'
+    +'<select class="fi" id="inp-owner" style="flex:1;min-width:120px">'+ownerOptsAdd+'</select>'
+    +'<button class="btn btn-p btn-sm" onclick="addProject()" style="white-space:nowrap">+ Add</button>'
+    +'</div>'
+    +'<div style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Project</th><th style="min-width:90px">Nature</th><th style="min-width:90px">Status</th><th style="min-width:120px">Owner</th><th style="text-align:center;width:80px">Cap. avg</th><th style="width:44px"></th></tr></thead><tbody>'+projRows+'</tbody></table></div>'
+    +'</div></div>'
+    +'</div>'
+    // BULK ASSIGN MODULE
+    +'<div class="card" style="padding:22px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">'
+    +'<span style="font-size:16px">&#9889;</span>'
+    +'<h2 style="font-size:14.5px;font-weight:600">Quick Assignment</h2>'
+    +'<span style="font-size:12px;color:var(--muted);font-weight:400">Assign a member to a project for a week range — sets all weeks in range to the given %</span>'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">'
+    +'<div style="flex:1;min-width:140px"><label class="fl">Member</label><select class="fi" id="ba-member">'+memOptsBA+'</select></div>'
+    +'<div style="flex:1;min-width:140px"><label class="fl">Project</label><select class="fi" id="ba-proj">'+projOptsBA+'</select></div>'
+    +'<div style="flex:1;min-width:120px"><label class="fl">From week</label><select class="fi" id="ba-from">'+wkOpts+'</select></div>'
+    +'<div style="flex:1;min-width:120px"><label class="fl">To week</label><select class="fi" id="ba-to">'+wkOpts+'</select></div>'
+    +'<div style="width:80px"><label class="fl">Dedication %</label><input class="fi" id="ba-pct" type="number" min="0" max="200" value="100" style="text-align:center"></div>'
+    +'<button class="btn btn-p" onclick="bulkAssign()" style="margin-bottom:1px">&#9889; Assign</button>'
+    +'</div>'
+    +'<div id="ba-msg" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>'
+    +'</div>';
+}
+
+function startEditComment(td,id){
+  var asgn=null;for(var i=0;i<assignments.length;i++){if(assignments[i].id===id){asgn=assignments[i];break;}}
+  if(!asgn)return;
+  var inp=document.createElement('input');
+  inp.type='text';
+  inp.value=asgn.comment||'';
+  inp.placeholder='Add note…';
+  inp.style.cssText='width:100%;border:1.5px solid var(--accent);border-radius:4px;padding:4px 7px;font-size:12px;font-family:inherit;outline:none;color:var(--text);background:#fff';
+  td.innerHTML='';td.appendChild(inp);
+  inp.focus();inp.select();
+  var committed=false;
+  function commit(){
+    if(committed)return;committed=true;
+    asgn.comment=inp.value.trim();
+    saveState();spSaveAssignment(asgn);renderByProject();
+  }
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){inp.removeEventListener('blur',commit);commit();}
+    if(e.key==='Escape'){committed=true;renderByProject();}
+  });
+}
+
+function startEdit(el){
+  var id=parseInt(el.dataset.id);var wk=el.dataset.wk;
+  var asgn=null;for(var i=0;i<assignments.length;i++){if(assignments[i].id===id){asgn=assignments[i];break;}}
+  var cur=asgn?(asgn.allocations[wk]!=null?asgn.allocations[wk]:null):null;
+  var inp=document.createElement('input');
+  inp.type='text';inp.className='ac-input';
+  inp.value=cur!=null?String(Math.round(cur*100)):'';
+  inp.placeholder='%';
+  el.parentNode.replaceChild(inp,el);
+  inp.focus();inp.select();
+  var committed=false;
+  function commit(){
+    if(committed)return;committed=true;
+    var raw=inp.value.trim();var v=null;
+    if(raw!==''){var n=parseFloat(raw);if(!isNaN(n))v=Math.min(2,Math.max(0,n/100));}
+    var a2=null;for(var j=0;j<assignments.length;j++){if(assignments[j].id===id){a2=assignments[j];break;}}
+    if(a2){if(v===null)delete a2.allocations[wk];else a2.allocations[wk]=v;}
+    saveState();spSaveAssignment(a2);render();
+  }
+  inp.addEventListener('blur',commit);
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){inp.removeEventListener('blur',commit);commit();}
+    if(e.key==='Escape'){committed=true;render();}
+  });
+}
+
+function openModal(){
+  var projOpts=projects.map(function(p){return'<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>';}).join('');
+  var memOpts='<option value="">Unassigned</option>'+teamMembers.map(function(m){return'<option value="'+esc(m)+'">'+esc(m)+'</option>';}).join('');
+  var natOpts='<option value="">&mdash;</option>'+NATURES.map(function(n){return'<option>'+n+'</option>';}).join('');
+  var stOpts=STATUSES.map(function(s){return'<option>'+s+'</option>';}).join('');
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML='<div class="modal">'
+    +'<div class="modal-head"><h3>New project assignment</h3><button class="btn-ghost" onclick="this.closest(\'.overlay\').remove()" style="font-size:16px">&#10005;</button></div>'
+    +'<div class="modal-body">'
+    +'<div class="fg"><label class="fl">Project</label><select class="fi" id="m-proj" onchange="syncNature()">'+projOpts+'</select></div>'
+    +'<div class="fi-grid"><div class="fg"><label class="fl">Nature</label><select class="fi" id="m-nat">'+natOpts+'</select></div>'
+    +'<div class="fg"><label class="fl">Status</label><select class="fi" id="m-st">'+stOpts+'</select></div></div>'
+    +'<div class="fg"><label class="fl">Team member</label><select class="fi" id="m-mem">'+memOpts+'</select></div>'
+    +'<div class="fg" style="margin-bottom:0"><label class="fl">Comment (optional)</label><input class="fi" id="m-com" placeholder="Notes..."></div>'
+    +'</div>'
+    +'<div class="modal-foot"><button class="btn btn-s" onclick="this.closest(\'.overlay\').remove()">Cancel</button><button class="btn btn-p" onclick="submitAdd()">Create assignment</button></div>'
+    +'</div>';
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+  syncNature();
+}
+
+function syncNature(){
+  var pname=document.getElementById('m-proj');if(!pname)return;
+  var p=null;for(var i=0;i<projects.length;i++){if(projects[i].name===pname.value){p=projects[i];break;}}
+  if(p){
+    var nat=document.getElementById('m-nat');var st=document.getElementById('m-st');
+    if(nat)nat.value=p.nature||'';
+    if(st)st.value=p.status||'Confirmed';
+  }
+}
+
+function submitAdd(){
+  var row={id:mkid(),project:document.getElementById('m-proj').value,nature:document.getElementById('m-nat').value,status:document.getElementById('m-st').value,member:document.getElementById('m-mem').value,comment:document.getElementById('m-com').value,allocations:{}};
+  assignments.push(row);
+  var ov=document.querySelector('.overlay');if(ov)ov.remove();
+  saveState();spSaveAssignment(row);render();
+}
+
+function updField(id,field,val){
+  var a=null;for(var i=0;i<assignments.length;i++){if(assignments[i].id===id){assignments[i][field]=val;a=assignments[i];break;}}
+  if(a)spSaveAssignment(a);saveState();renderTopbar();renderSidebar();
+}
+
+function delAsgn(id){
+  var a=assignments.filter(function(x){return x.id===id;})[0];
+  if(a)spDeleteAssignment(a._spId);
+  assignments=assignments.filter(function(a){return a.id!==id;});saveState();render();
+}
+
+function addMember(){
+  var el=document.getElementById('inp-member');var v=el.value.trim();
+  if(v&&teamMembers.indexOf(v)===-1){teamMembers.push(v);el.value='';saveState();spSaveMember(v);render();}
+}
+
+function delMember(btn){
+  var m=btn.getAttribute('data-m');
+  if(!confirm('Remove "'+m+'" from the team? All their assignments will be deleted.'))return;
+  assignments.filter(function(a){return a.member===m;}).forEach(function(a){spDeleteAssignment(a._spId);});
+  teamMembers=teamMembers.filter(function(x){return x!==m;});
+  assignments=assignments.filter(function(a){return a.member!==m;});
+  spDeleteMember(m);saveState();render();
+}
+
+function addProject(){
+  var n=document.getElementById('inp-proj').value.trim();
+  var exists=false;for(var i=0;i<projects.length;i++){if(projects[i].name===n){exists=true;break;}}
+  if(n&&!exists){
+    projects.push({name:n,nature:document.getElementById('inp-nature').value,status:document.getElementById('inp-status').value,owner:document.getElementById('inp-owner').value});
+    var newP=projects[projects.length-1];
+    document.getElementById('inp-proj').value='';saveState();spSaveProject(newP);render();
+  }
+}
+
+function delProject(btn){
+  var name=btn.getAttribute('data-name');
+  if(!confirm('Remove "'+name+'"? All its assignments will be deleted.'))return;
+  var p=projects.find(function(x){return x.name===name;});
+  if(p)spDeleteProject(p._spId);
+  assignments.filter(function(a){return a.project===name;}).forEach(function(a){spDeleteAssignment(a._spId);});
+  projects=projects.filter(function(p){return p.name!==name;});
+  assignments=assignments.filter(function(a){return a.project!==name;});
+  saveState();render();
+}
+
+function updProjStatus(sel){
+  var name=sel.getAttribute('data-name');var status=sel.value;
+  var p=null;for(var i=0;i<projects.length;i++){if(projects[i].name===name){projects[i].status=status;p=projects[i];break;}}
+  assignments.forEach(function(a){if(a.project===name)a.status=status;});
+  if(p)spSaveProject(p);saveState();renderTopbar();renderSidebar();
+}
+
+function updProjNature(sel){
+  var name=sel.getAttribute('data-name');var nature=sel.value;
+  var p=null;for(var i=0;i<projects.length;i++){if(projects[i].name===name){projects[i].nature=nature;p=projects[i];break;}}
+  if(p)spSaveProject(p);saveState();
+}
+
+function updProjOwner(sel){
+  var name=sel.getAttribute('data-name');var owner=sel.value;
+  var p=null;for(var i=0;i<projects.length;i++){if(projects[i].name===name){projects[i].owner=owner;p=projects[i];break;}}
+  if(p)spSaveProject(p);saveState();
+}
+
+function bulkAssign(){
+  var member=document.getElementById('ba-member').value;
+  var proj=document.getElementById('ba-proj').value;
+  var fromWk=document.getElementById('ba-from').value;
+  var toWk=document.getElementById('ba-to').value;
+  var pctRaw=parseFloat(document.getElementById('ba-pct').value);
+  var msg=document.getElementById('ba-msg');
+
+  if(!member||!proj||!fromWk||!toWk||isNaN(pctRaw)){
+    msg.innerHTML='<span style="color:#EF4444">&#9888; Please fill in all fields.</span>';return;
+  }
+  var v=Math.min(2,Math.max(0,pctRaw/100));
+  var fromIdx=ALL_WEEKS.indexOf(fromWk);
+  var toIdx=ALL_WEEKS.indexOf(toWk);
+  if(fromIdx<0||toIdx<0||fromIdx>toIdx){
+    msg.innerHTML='<span style="color:#EF4444">&#9888; "From" week must be before "To" week.</span>';return;
+  }
+  var rangeWeeks=ALL_WEEKS.slice(fromIdx,toIdx+1);
+
+  // find existing assignment for this member+project or create one
+  var existing=null;
+  for(var i=0;i<assignments.length;i++){
+    if(assignments[i].member===member&&assignments[i].project===proj){existing=assignments[i];break;}
+  }
+  if(!existing){
+    var p=null;for(var j=0;j<projects.length;j++){if(projects[j].name===proj){p=projects[j];break;}}
+    existing={id:mkid(),project:proj,nature:p?p.nature:'',status:p?p.status:'Confirmed',member:member,comment:'',allocations:{}};
+    assignments.push(existing);
+  }
+  rangeWeeks.forEach(function(w){existing.allocations[w]=v;});
+
+  var label=fromWk.replace('_',' ')+' to '+toWk.replace('_',' ');
+  msg.innerHTML='<span style="color:#059669">&#10003; Assigned <strong>'+esc(member)+'</strong> to <strong>'+esc(proj)+'</strong> at <strong>'+Math.round(pctRaw)+'%</strong> from '+label+' ('+rangeWeeks.length+' weeks updated).</span>';
+  saveState();spSaveAssignment(existing);render();
+}
+
+function setView(v){currentView=v;render();}
+function setMonth(m){currentMonth=m;render();}
+
+// ── CSS for export matrix ─────────────────────────────────────────────────
+(function(){
+  var s=document.createElement('style');
+  s.textContent=
+    '.exp-wrap{overflow:auto;max-height:72vh}'
+    +'.exp-table{border-collapse:collapse;font-size:12px;white-space:nowrap}'
+    +'.exp-table th,.exp-table td{border:1px solid var(--border);padding:0}'
+    +'.exp-table thead th{background:var(--s2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);position:sticky;top:0;z-index:2}'
+    +'.exp-table thead th.proj-h{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;padding:10px 6px;max-width:36px;min-width:36px;font-size:10px;font-weight:600;color:var(--text)}'
+    +'.exp-table tbody tr:hover td{background:#F5F7FF}'
+    +'.exp-table td.member-cell{font-weight:500;font-size:12px;padding:6px 12px;background:var(--s2);position:sticky;left:0;z-index:1;border-right:2px solid var(--border2);min-width:150px}'
+    +'.exp-table th.sticky-corner{position:sticky;left:0;z-index:3;background:var(--s2);min-width:150px;text-align:left;padding:6px 12px}'
+    +'.exp-chip{display:flex;align-items:center;justify-content:center;width:100%;height:32px;font-size:11px;font-weight:700}'
+    +'.exp-chip-ok{background:#ECFDF5;color:#059669}'
+    +'.exp-chip-md{background:#F1F5F9;color:#64748B}'
+    +'.exp-chip-ov{background:#FEF2F2;color:#EF4444}'
+    +'.exp-chip-zz{background:transparent;color:var(--subtle)}'
+    +'.exp-total{background:#F8FAFF!important;font-weight:700;color:var(--accent)}';
+  document.head.appendChild(s);
+})();
+
+function renderExport(){
+  var wkOpts=ALL_WEEKS.map(function(w){
+    return'<option value="'+w+'">'+w.replace('_',' ')+'</option>';
+  }).join('');
+
+  document.getElementById('view-export').innerHTML=
+    '<div class="sh"><h2>Capacity export matrix</h2></div>'
+    +'<div class="card" style="padding:20px;margin-bottom:18px">'
+    +'<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">'
+    +'<div><label class="fl">From week</label><select class="fi" id="ex-from" style="min-width:130px">'+wkOpts+'</select></div>'
+    +'<div><label class="fl">To week</label><select class="fi" id="ex-to" style="min-width:130px">'+wkOpts+'</select></div>'
+    +'<button class="btn btn-p" onclick="generateMatrix()">&#9654; Generate matrix</button>'
+    +'<button class="btn btn-s" id="ex-csv-btn" onclick="exportCSV()" style="display:none">&#8659; CSV</button>'
+    +'<button class="btn btn-s" id="ex-xlsx-btn" onclick="exportXLSX()" style="display:none;border-color:#217346;color:#217346">&#8659; Excel (.xlsx)</button>'
+    +'</div>'
+    +'</div>'
+    +'<div id="ex-result"></div>';
+
+  // pre-select a sensible default range
+  var fromSel=document.getElementById('ex-from');
+  var toSel=document.getElementById('ex-to');
+  if(fromSel&&ALL_WEEKS.length){
+    fromSel.value=ALL_WEEKS[0];
+    toSel.value=ALL_WEEKS[Math.min(3,ALL_WEEKS.length-1)];
+  }
+}
+
+var _exMatrix=null; // store last matrix for CSV export
+
+function generateMatrix(){
+  var fromWk=document.getElementById('ex-from').value;
+  var toWk=document.getElementById('ex-to').value;
+  var fromIdx=ALL_WEEKS.indexOf(fromWk);
+  var toIdx=ALL_WEEKS.indexOf(toWk);
+  var result=document.getElementById('ex-result');
+
+  if(fromIdx<0||toIdx<0||fromIdx>toIdx){
+    result.innerHTML='<div class="alert-err">&#9888; "From" week must be before or equal to "To" week.</div>';
+    document.getElementById('ex-csv-btn').style.display='none';
+    document.getElementById('ex-xlsx-btn').style.display='none';
+    return;
+  }
+
+  var rangeWeeks=ALL_WEEKS.slice(fromIdx,toIdx+1);
+  var label=fromWk.replace('_',' ')+' &rarr; '+toWk.replace('_',' ');
+
+  // find projects that have any allocation in range
+  var projSet={};
+  assignments.forEach(function(a){
+    rangeWeeks.forEach(function(w){
+      if(a.allocations[w]!=null&&a.allocations[w]>0)projSet[a.project]=1;
+    });
+  });
+  var activeProjNames=Object.keys(projSet).sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});
+
+  if(!activeProjNames.length){
+    result.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No assignments found for this date range.</div>';
+    document.getElementById('ex-csv-btn').style.display='none';
+    document.getElementById('ex-xlsx-btn').style.display='none';
+    return;
+  }
+
+  // build matrix data: member × project → avg allocation in range
+  // also aggregate per-member total
+  var matrix={}; // matrix[member][proj] = avg or null
+  teamMembers.forEach(function(m){
+    matrix[m]={};
+    activeProjNames.forEach(function(p){matrix[m][p]=null;});
+  });
+
+  assignments.forEach(function(a){
+    if(!a.member||!matrix[a.member])return;
+    if(!(a.project in matrix[a.member]))return; // project not active in this range
+    var vals=rangeWeeks.map(function(w){return a.allocations[w]!=null?a.allocations[w]:null;}).filter(function(v){return v!==null;});
+    if(!vals.length)return;
+    var avg=vals.reduce(function(a,b){return a+b;},0)/vals.length;
+    matrix[a.member][a.project]=(matrix[a.member][a.project]||0)+avg;
+  });
+
+  _exMatrix={members:teamMembers,projects:activeProjNames,data:matrix,range:fromWk.replace('_',' ')+' to '+toWk.replace('_',' '),weeks:rangeWeeks};
+
+  // chip rendering
+  function chip(v){
+    if(v===null||v===0)return'<div class="exp-chip exp-chip-zz">&mdash;</div>';
+    var cls=v>1.005?'exp-chip-ov':v>=0.8?'exp-chip-ok':'exp-chip-md';
+    return'<div class="exp-chip '+cls+'">'+Math.round(v*100)+'%</div>';
+  }
+
+  // header row
+  var thead='<tr>'
+    +'<th class="sticky-corner" style="padding:8px 12px">Member &nbsp;<span style="font-weight:400;color:var(--subtle)">'+label+'</span></th>'
+    +activeProjNames.map(function(p){
+      var pObj=null;for(var i=0;i<projects.length;i++){if(projects[i].name===p){pObj=projects[i];break;}}
+      var ncls={Product:'n-pr',Transformation:'n-tr',Mixed:'n-mi',Enterprise:'n-en'}[pObj&&pObj.nature]||'';
+      return'<th class="proj-h" title="'+esc(p)+(pObj&&pObj.owner?' · '+pObj.owner:'')+'"><span>'+esc(p)+'</span></th>';
+    }).join('')
+    +'<th style="position:sticky;top:0;background:#F1F4FF;color:var(--accent);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;text-align:center;min-width:56px;z-index:2">TOTAL</th>'
+    +'</tr>';
+
+  // body rows
+  var tbody=teamMembers.map(function(member){
+    var rowVals=activeProjNames.map(function(p){return matrix[member][p];});
+    var nonNull=rowVals.filter(function(v){return v!==null&&v>0;});
+    if(!nonNull.length)return''; // skip members with no activity in range
+    var total=nonNull.reduce(function(a,b){return a+b;},0);
+    var totalCls=total>1.005?'exp-chip-ov':total>=0.8?'exp-chip-ok':'exp-chip-md';
+    return'<tr>'
+      +'<td class="member-cell">'+esc(member)+'</td>'
+      +rowVals.map(function(v){return'<td style="padding:0;min-width:54px">'+chip(v)+'</td>';}).join('')
+      +'<td style="padding:0;min-width:56px"><div class="exp-chip exp-total '+totalCls+'">'+Math.round(total*100)+'%</div></td>'
+      +'</tr>';
+  }).filter(Boolean).join('');
+
+  if(!tbody){
+    result.innerHTML='<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No member has allocations in this range.</div>';
+    document.getElementById('ex-csv-btn').style.display='none';
+    document.getElementById('ex-xlsx-btn').style.display='none';
+    return;
+  }
+
+  result.innerHTML=
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'
+    +activeProjNames.length+' projects &middot; '+teamMembers.filter(function(m){return activeProjNames.some(function(p){return (matrix[m][p]||0)>0;});}).length+' members active in range</div>'
+    +'<div class="exp-wrap card"><table class="exp-table"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></div>';
+
+  document.getElementById('ex-csv-btn').style.display='';
+  document.getElementById('ex-xlsx-btn').style.display='';
+}
+
+function exportXLSX(){
+  if(!_exMatrix)return;
+
+  // ── build data rows ──────────────────────────────────────────────────────
+  var headerRow=['Member'].concat(_exMatrix.projects).concat(['TOTAL']);
+  var dataRows=[];
+  _exMatrix.members.forEach(function(member){
+    var rowVals=_exMatrix.projects.map(function(p){return _exMatrix.data[member][p];});
+    var nonNull=rowVals.filter(function(v){return v!==null&&v>0;});
+    if(!nonNull.length)return;
+    var total=nonNull.reduce(function(a,b){return a+b;},0);
+    var cells=[member]
+      .concat(rowVals.map(function(v){return (v===null||v===0)?'':Math.round(v*100)/100;}))
+      .concat([Math.round(total*100)/100]);
+    dataRows.push(cells);
+  });
+
+  // ── create workbook ──────────────────────────────────────────────────────
+  var wb=XLSX.utils.book_new();
+  var wsData=[headerRow].concat(dataRows);
+  var ws=XLSX.utils.aoa_to_sheet(wsData);
+
+  // ── column widths ────────────────────────────────────────────────────────
+  var colWidths=[{wch:22}]; // member column
+  _exMatrix.projects.forEach(function(p){colWidths.push({wch:Math.max(12,Math.min(p.length,28))});});
+  colWidths.push({wch:10}); // total column
+  ws['!cols']=colWidths;
+
+  // ── freeze top row + first col ───────────────────────────────────────────
+  ws['!freeze']={xSplit:1,ySplit:1,topLeftCell:'B2',activePane:'bottomRight'};
+
+  // ── cell styles via SheetJS format strings ───────────────────────────────
+  // Header row: bold + background
+  var range=XLSX.utils.decode_range(ws['!ref']);
+  for(var C=range.s.c;C<=range.e.c;C++){
+    var hCell=ws[XLSX.utils.encode_cell({r:0,c:C})];
+    if(hCell){
+      hCell.s={
+        font:{bold:true,color:{rgb:'FFFFFF'},sz:10},
+        fill:{fgColor:{rgb:'4F46E5'}},
+        alignment:{horizontal:'center',vertical:'center',wrapText:true},
+        border:{bottom:{style:'medium',color:{rgb:'4338CA'}}}
+      };
+    }
+  }
+  // Member column: bold
+  for(var R=1;R<=range.e.r;R++){
+    var mCell=ws[XLSX.utils.encode_cell({r:R,c:0})];
+    if(mCell)mCell.s={font:{bold:true,sz:10},alignment:{vertical:'center'}};
+  }
+  // Data cells: colour-coded
+  for(var R2=1;R2<=range.e.r;R2++){
+    for(var C2=1;C2<range.e.c;C2++){
+      var dc=ws[XLSX.utils.encode_cell({r:R2,c:C2})];
+      if(!dc||dc.v==='')continue;
+      var pct=dc.v; // stored as 0–2 float
+      var rgb=pct>1.005?'FEE2E2':pct>=0.8?'D1FAE5':'F1F5F9';
+      var fgb=pct>1.005?'DC2626':pct>=0.8?'059669':'64748B';
+      dc.s={
+        font:{color:{rgb:fgb},bold:true,sz:10},
+        fill:{fgColor:{rgb:rgb}},
+        alignment:{horizontal:'center',vertical:'center'},
+        numFmt:'0%'
+      };
+      dc.v=pct; dc.t='n'; dc.z='0%'; // store as number, format as %
+    }
+    // Total column
+    var tc=ws[XLSX.utils.encode_cell({r:R2,c:range.e.c})];
+    if(tc&&tc.v!==''){
+      var tpct=tc.v;
+      var trgb=tpct>1.005?'FEE2E2':tpct>=0.8?'DBEAFE':'F1F5F9';
+      var tfgb=tpct>1.005?'DC2626':tpct>=0.8?'1D4ED8':'64748B';
+      tc.s={font:{color:{rgb:tfgb},bold:true,sz:11},fill:{fgColor:{rgb:trgb}},alignment:{horizontal:'center',vertical:'center'},numFmt:'0%'};
+      tc.v=tpct;tc.t='n';tc.z='0%';
+    }
+  }
+
+  // ── row height ───────────────────────────────────────────────────────────
+  ws['!rows']=[{hpt:28}];
+  for(var R3=1;R3<=range.e.r;R3++){ws['!rows'].push({hpt:22});}
+
+  // ── meta sheet ───────────────────────────────────────────────────────────
+  var metaWs=XLSX.utils.aoa_to_sheet([
+    ['Medusa — Capacity Platform'],
+    ['Range',_exMatrix.range],
+    ['Generated',new Date().toLocaleDateString('en-GB')],
+    ['Members',dataRows.length],
+    ['Projects',_exMatrix.projects.length]
+  ]);
+  metaWs['!cols']=[{wch:16},{wch:30}];
+
+  XLSX.utils.book_append_sheet(wb,ws,'Capacity Matrix');
+  XLSX.utils.book_append_sheet(wb,metaWs,'Info');
+
+  var filename='medusa_capacity_'+_exMatrix.range.replace(/ /g,'_').replace(/>/g,'-')+'.xlsx';
+  XLSX.writeFile(wb,filename);
+}
+  if(!_exMatrix)return;
+  var rows=[];
+  // header
+  var hdr=['Member'].concat(_exMatrix.projects).concat(['TOTAL']);
+  rows.push(hdr.map(function(h){return'"'+h.replace(/"/g,'""')+'"';}).join(','));
+  // data
+  _exMatrix.members.forEach(function(member){
+    var rowVals=_exMatrix.projects.map(function(p){return _exMatrix.data[member][p];});
+    var nonNull=rowVals.filter(function(v){return v!==null&&v>0;});
+    if(!nonNull.length)return;
+    var total=nonNull.reduce(function(a,b){return a+b;},0);
+    var cells=['"'+member.replace(/"/g,'""')+'"']
+      .concat(rowVals.map(function(v){return v===null||v===0?'':Math.round(v*100)+'%';}))
+      .concat([Math.round(total*100)+'%']);
+    rows.push(cells.join(','));
+  });
+  var csv=rows.join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='capacity_'+_exMatrix.range.replace(/ /g,'_')+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+}
+
+function render(){
+  renderSidebar();renderTopbar();
+  document.querySelectorAll('.view').forEach(function(el){el.classList.remove('on');});
+  var t=document.getElementById('view-'+currentView);if(t)t.classList.add('on');
+  if(currentView==='dashboard')renderDashboard();
+  if(currentView==='byproject')renderByProject();
+  if(currentView==='bymember')renderByMember();
+  if(currentView==='master')renderMaster();
+  if(currentView==='export')renderExport();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOCAL AUTH
+// Default credentials (first run): email = admin@medusa.app  pwd = Medusa2026!
+// Change via Change password button in sidebar.
+// ═══════════════════════════════════════════════════════════════════════════
+var AUTH_KEY='medusa_auth_hash';
+var SESSION_KEY='medusa_session';
+
+// Hash function: uses crypto.subtle when available (HTTPS), falls back to
+// a simple djb2-style hash for HTTP/file contexts (e.g. local testing).
+function hashCreds(str){
+  if(window.crypto&&window.crypto.subtle){
+    var buf=new TextEncoder().encode(str);
+    return window.crypto.subtle.digest('SHA-256',buf).then(function(h){
+      return Array.from(new Uint8Array(h)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+    });
+  }
+  // Fallback: btoa double-encode (no crypto required)
+  var h=0,i,chr;
+  for(i=0;i<str.length;i++){chr=str.charCodeAt(i);h=((h<<5)-h)+chr;h|=0;}
+  return Promise.resolve('fb_'+btoa(str.split('').reverse().join('')).replace(/=/g,'')+'_'+Math.abs(h).toString(16));
+}
+
+function isLoggedIn(){return sessionStorage.getItem(SESSION_KEY)==='1';}
+
+function doLogin(){
+  var email=(document.getElementById('login-email').value||'').trim().toLowerCase();
+  var pwd=document.getElementById('login-pwd').value||'';
+  var errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!email||!pwd){showLoginErr('Please enter your email and password.');return;}
+
+  var stored=localStorage.getItem(AUTH_KEY);
+
+  hashCreds(email+'::'+pwd).then(function(hash){
+    if(!stored){
+      // First run — check default credentials
+      hashCreds('admin@medusa.app::Medusa2026!').then(function(def){
+        if(hash===def){authSuccess();}
+        else{showLoginErr('Incorrect email or password.');}
+      }).catch(function(){showLoginErr('Auth error. Try again.');});
+    } else {
+      if(hash===stored){authSuccess();}
+      else{showLoginErr('Incorrect email or password.');}
+    }
+  }).catch(function(e){
+    console.error('Login error:',e);
+    showLoginErr('Authentication error. Please try again.');
+  });
+}
+
+function authSuccess(){
+  sessionStorage.setItem(SESSION_KEY,'1');
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-root').style.display='flex';
+  render();
+}
+
+function showLoginErr(msg){
+  var el=document.getElementById('login-err');
+  el.className='login-err';el.textContent=msg;el.style.display='block';
+  document.getElementById('login-pwd').value='';
+  setTimeout(function(){document.getElementById('login-pwd').focus();},0);
+}
+
+function togglePwd(){
+  var inp=document.getElementById('login-pwd');
+  var eye=document.getElementById('pwd-eye');
+  if(inp.type==='password'){inp.type='text';eye.style.color='var(--accent)';}
+  else{inp.type='password';eye.style.color='var(--subtle)';}
+}
+
+function doLogout(){
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('app-root').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pwd').value='';
+  document.getElementById('login-err').style.display='none';
+  setTimeout(function(){var el=document.getElementById('login-email');if(el)el.focus();},80);
+}
+
+function openChangePwd(){
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML='<div class="modal" style="max-width:420px">'
+    +'<div class="modal-head"><h3>Change credentials</h3><button class="btn-ghost" onclick="this.closest(\'.overlay\').remove()" style="font-size:16px">&#10005;</button></div>'
+    +'<div class="modal-body" style="display:flex;flex-direction:column;gap:12px">'
+    +'<div><label class="fl">Login email</label><input class="fi" id="cp-email" type="email" placeholder="your@company.com"></div>'
+    +'<div><label class="fl">New password</label><input class="fi" id="cp-pwd1" type="password" placeholder="Min. 8 characters"></div>'
+    +'<div><label class="fl">Confirm password</label><input class="fi" id="cp-pwd2" type="password" placeholder="Repeat password"></div>'
+    +'<div id="cp-err" style="display:none"></div>'
+    +'</div>'
+    +'<div class="modal-foot">'
+    +'<button class="btn btn-s" onclick="this.closest(\'.overlay\').remove()">Cancel</button>'
+    +'<button class="btn btn-p" onclick="saveNewPwd()">Save</button>'
+    +'</div></div>';
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+function saveNewPwd(){
+  var email=(document.getElementById('cp-email').value||'').trim().toLowerCase();
+  var p1=document.getElementById('cp-pwd1').value;
+  var p2=document.getElementById('cp-pwd2').value;
+  var err=document.getElementById('cp-err');
+  if(!email||!p1){err.className='login-err';err.textContent='Email and password are required.';err.style.display='block';return;}
+  if(p1.length<8){err.className='login-err';err.textContent='Password must be at least 8 characters.';err.style.display='block';return;}
+  if(p1!==p2){err.className='login-err';err.textContent='Passwords do not match.';err.style.display='block';return;}
+  hashCreds(email+'::'+p1).then(function(hash){
+    localStorage.setItem(AUTH_KEY,hash);
+    document.querySelector('.overlay').remove();
+    var toast=document.createElement('div');
+    toast.style.cssText='position:fixed;bottom:24px;right:24px;background:#1E293B;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;align-items:center;gap:8px';
+    toast.innerHTML='<span style="color:#10B981">&#10003;</span> Credentials updated';
+    document.body.appendChild(toast);
+    setTimeout(function(){toast.remove();},3000);
+  });
+}
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── BOOT ────────────────────────────────────────────────────────────────
+if(isLoggedIn()){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-root').style.display='flex';
+  render();
+} else {
+  setTimeout(function(){var el=document.getElementById('login-email');if(el)el.focus();},80);
+}
+</script>
+</body>
+</html>
